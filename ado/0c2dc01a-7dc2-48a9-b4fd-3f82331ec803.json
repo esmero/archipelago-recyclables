@@ -1,12 +1,12 @@
 {
     "type": "Movie",
-    "warcs": [],
     "label": "A Brief History of Acceleration",
     "owner": "",
     "audios": [],
     "images": [],
     "models": [],
     "videos": [],
+    "warcs": [],
     "creator": "Jaffe, Andy",
     "documents": [],
     "edm_agent": [
@@ -16,6 +16,13 @@
             "role_uri": "http:\/\/www.wikidata.org\/entity\/Q713200",
             "name_label": "Williams Jazz Ensemble",
             "role_label": "performing artist"
+        },
+        {
+            "agent": "",
+            "name_uri": "http:\/\/www.wikidata.org\/entity\/Q49166",
+            "role_uri": "http:\/\/www.wikidata.org\/entity\/Q20204892",
+            "name_label": "Williams College",
+            "role_label": "Contributor"
         }
     ],
     "ismemberof": null,
@@ -77,5 +84,5 @@
         "neighbourhood": "",
         "state_district": ""
     },
-    "strawberry_field_widget_id": "descriptive_metadata",
+    "strawberry_field_widget_id": "descriptive_metadata"
 }

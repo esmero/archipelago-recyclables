@@ -1,0 +1,90 @@
+{
+    "type": "Photograph",
+    "label": "Cox 18",
+    "owner": "",
+    "audios": [],
+    "images": [],
+    "models": [],
+    "videos": [],
+    "warcs": [],
+    "creator": "Fox, Bill",
+    "as:image": ,
+    "documents": [],
+    "edm_agent": [
+        {
+            "agent": "",
+            "name_uri": "",
+            "role_uri": "http:\/\/www.wikidata.org\/entity\/Q33231",
+            "name_label": "Bill Fox",
+            "role_label": "photographer"
+        },
+        {
+            "agent": "",
+            "name_uri": "http:\/\/www.wikidata.org\/entity\/Q49166",
+            "role_uri": "http:\/\/www.wikidata.org\/entity\/Q20204892",
+            "name_label": "Williams College",
+            "role_label": "Contributor"
+        }
+    ],
+    "ismemberof": null,
+    "description": "Sand waves. Image is 200m horizontal.",
+    "subject_loc": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85119508",
+            "label": "Sedimentology"
+        },
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85117206",
+            "label": "Sand waves"
+        }
+    ],
+    "as:generator": {
+        "type": "Create",
+        "actor": {
+            "url": "http:\/\/localhost:8001\/form\/descriptive-metadata",
+            "name": "descriptive_metadata",
+            "type": "Service"
+        },
+        "endTime": "2020-07-09T15:14:03-04:00",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+    },
+    "date_published": "2020-07-09",
+    "term_aat_getty": null,
+    "ap:entitymapping": {
+        "entity:file": [
+            "images",
+            "documents",
+            "audios",
+            "videos",
+            "models",
+            "warcs"
+        ]
+    },
+    "local_identifier": "Large_Image_01",
+    "subject_wikidata": [
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q25391",
+            "label": "dune"
+        }
+    ],
+    "geographic_location": {
+        "lat": "55.5321257",
+        "lng": "-106.1412243",
+        "city": "",
+        "state": "Saskatchewan",
+        "value": "Saskatchewan, Canada",
+        "county": "",
+        "osm_id": "391178",
+        "country": "Canada",
+        "category": "boundary",
+        "locality": "",
+        "osm_type": "relation",
+        "postcode": "",
+        "country_code": "ca",
+        "display_name": "Saskatchewan, Canada",
+        "neighbourhood": "",
+        "state_district": ""
+    },
+    "strawberry_field_widget_id": "descriptive_metadata"
+}
