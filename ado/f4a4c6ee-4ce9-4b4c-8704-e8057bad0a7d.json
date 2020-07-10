@@ -1,0 +1,79 @@
+{
+    "type": "Panorama",
+    "label": "Strawberry Field at Thorpes Organic Family Farm",
+    "owner": "ESIE (Empire State Immersive Experiences)",
+    "audios": [],
+    "images": [],
+    "models": [],
+    "videos": [],
+    "warcs": [],
+    "creator": "Lund, Allison",
+    "documents": [],
+    "edm_agent": [],
+    "ismemberof": null,
+    "description": "Strawberry field at Thorpes Organic Family Farm in East Aurora, NY. Image depicts late-season strawberry \"u-pick\" fields on a late July evening, 2020.",
+    "subject_loc": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85128547",
+            "label": "Strawberries"
+        },
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh2010104552",
+            "label": "Organic farming--United States"
+        }
+    ],
+    "website_url": "",
+    "as:generator": {
+        "type": "Update",
+        "actor": {
+            "url": "https:\/\/play.archipelago.nyc\/form\/descriptive-metadata",
+            "name": "descriptive_metadata",
+            "type": "Service"
+        },
+        "endTime": "2020-07-10T14:01:08-04:00",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+    },
+    "date_published": "2020-07-02",
+    "term_aat_getty": null,
+    "ap:entitymapping": {
+        "entity:file": [
+            "images",
+            "documents",
+            "audios",
+            "videos",
+            "models",
+            "warcs"
+        ]
+    },
+    "local_identifier": "",
+    "subject_wikidata": [
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q745",
+            "label": "Fragaria"
+        },
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q165647",
+            "label": "organic agriculture"
+        }
+    ],
+    "geographic_location": {
+        "lat": "42.755309521944",
+        "lng": "-78.509831946323",
+        "city": "Wales Town",
+        "state": "New York",
+        "value": "12866, Strykersville Road, Wales Hollow, Wales Town, Erie, New York, 14052, United States of America",
+        "county": "Erie",
+        "osm_id": "337075304",
+        "country": "United States of America",
+        "category": "place",
+        "locality": "Wales Hollow",
+        "osm_type": "way",
+        "postcode": "14052",
+        "country_code": "us",
+        "display_name": "12866, Strykersville Road, Wales Hollow, Wales Town, Erie, New York, 14052, United States of America",
+        "neighbourhood": "",
+        "state_district": ""
+    },
+    "strawberry_field_widget_id": "descriptive_metadata"
+}
