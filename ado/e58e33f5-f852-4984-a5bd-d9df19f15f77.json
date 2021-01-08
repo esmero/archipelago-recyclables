@@ -1,0 +1,103 @@
+{
+    "type": "Book",
+    "label": "Gulielmensian 1863",
+    "owner": "Williams College",
+    "audios": [],
+    "images": [],
+    "models": [],
+    "rights": "",
+    "videos": [],
+    "creator": [],
+    "duration": "",
+    "language": [],
+    "documents": [
+    ],
+    "edm_agent": [],
+    "publisher": "",
+    "ismemberof": "22",
+    "creator_lod": [
+        {
+            "name_uri": "http:\/\/id.loc.gov\/authorities\/names\/n79056597",
+            "role_uri": "http:\/\/id.loc.gov\/vocabulary\/relators\/pbl",
+            "agent_type": "corporate",
+            "name_label": "Williams College",
+            "role_label": "Publisher"
+        }
+    ],
+    "description": "Williams College yearbook for the Class of 1863.",
+    "interviewee": [],
+    "interviewer": [],
+    "subject_loc": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85149058",
+            "label": "Yearbooks"
+        },
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85028356",
+            "label": "College students"
+        }
+    ],
+    "website_url": "",
+    "as:generator": {
+        "type": "Update",
+        "actor": {
+            "url": "http:\/\/localhost:8001\/form\/descriptive-metadata",
+            "name": "descriptive_metadata",
+            "type": "Service"
+        },
+        "endTime": "2021-01-08T16:33:29-05:00",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+    },
+    "date_created": "1863-05-01",
+    "issue_number": [],
+    "date_published": "2015-08-11",
+    "subjects_local": [],
+    "term_aat_getty": [
+        {
+            "uri": "",
+            "label": "liberal arts (cross-disciplinary studies)"
+        }
+    ],
+    "ap:entitymapping": {
+        "entity:file": [
+            "images",
+            "documents",
+            "audios",
+            "videos",
+            "models",
+            "upload_associated_warcs"
+        ],
+        "entity:node": [
+            "ismemberof"
+        ]
+    },
+    "local_identifier": "",
+    "subject_wikidata": [],
+    "rights_statements": "In Copyright - Educational Use Permitted",
+    "geographic_location": {
+        "lat": "42.7130236",
+        "lng": "-73.2030082",
+        "city": "Williamstown",
+        "state": "Massachusetts",
+        "value": "Williams College, Hopkins Hall Drive, Williamstown, Berkshire County, Massachusetts, 01267, United States",
+        "county": "Berkshire County",
+        "osm_id": "358260431",
+        "country": "United States",
+        "category": "amenity",
+        "locality": "",
+        "osm_type": "node",
+        "postcode": "01267",
+        "country_code": "us",
+        "display_name": "Williams College, Hopkins Hall Drive, Williamstown, Berkshire County, Massachusetts, 01267, United States",
+        "neighbourhood": "",
+        "state_district": ""
+    },
+    "subject_lcgft_terms": [],
+    "upload_associated_warcs": [],
+    "strawberry_field_widget_id": "default_descriptive_metadata",
+    "subject_lcnaf_personal_names": [],
+    "subject_lcnaf_corporate_names": [],
+    "subjects_local_personal_names": [],
+    "subject_lcnaf_geographic_names": []
+}
