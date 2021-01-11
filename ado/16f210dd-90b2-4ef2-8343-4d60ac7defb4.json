@@ -1,0 +1,37 @@
+{
+    "type": "Collection",
+    "label": "Archipelago Demo Objects",
+    "owner": "",
+    "images": [],
+    "rights": "",
+    "language": [],
+    "edm_agent": [],
+    "publisher": "",
+    "ismemberof": [],
+    "description": "Collection of demo Archipelago Digital Objects of various types.",
+    "subject_loc": [],
+    "subjects_local": [],
+    "term_aat_getty": [],
+    "ap:entitymapping": {
+        "entity:file": [
+            "images"
+        ],
+        "entity:node": [
+            "ismemberof"
+        ]
+    },
+    "subject_wikidata": [
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q2668072",
+            "label": "collection"
+        }
+    ],
+    "rights_statements": "In Copyright - Educational Use Permitted",
+    "geographic_location": null,
+    "subject_lcgft_terms": [],
+    "strawberry_field_widget_id": "digital_object_collection",
+    "subject_lcnaf_personal_names": [],
+    "subject_lcnaf_corporate_names": [],
+    "subjects_local_personal_names": [],
+    "subject_lcnaf_geographic_names": [],
+}
