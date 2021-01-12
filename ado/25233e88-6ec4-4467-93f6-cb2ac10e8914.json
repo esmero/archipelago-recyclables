@@ -1,0 +1,190 @@
+{
+    "type": "Photograph",
+    "label": "Panoramic View of the Andromeda Galaxy",
+    "owner": "",
+    "audios": [],
+    "images": [],
+    "models": [],
+    "rights": "Follow Copyright Statement found at: https:\/\/hubblesite.org\/copyright",
+    "videos": [],
+    "creator": [],
+    "as:image": {
+        "urn:uuid:59fbb8d6-4fa6-4434-b8c4-a29cce5dcda1": {
+            "url": "s3:\/\/dd9\/image-hs-2015-02-a-hires-jpg-59fbb8d6-4fa6-4434-b8c4-a29cce5dcda1.jpg",
+            "name": "hs-2015-02-a-hires_jpg.jpg",
+            "tags": [],
+            "type": "Image",
+            "dr:fid": 147,
+            "dr:for": "images",
+            "dr:uuid": "59fbb8d6-4fa6-4434-b8c4-a29cce5dcda1",
+            "checksum": "dd98de9678d35c6faad216189f988854",
+            "flv:exif": {
+                "Format": "image\/jpeg",
+                "History": "2014-12-11T10:26:50-05:00\tFile PHAT-crop-141210-retouch.psb opened\n2014-12-11T10:28:51-05:00\tFile PHAT-crop-half-141211.tif saved\n2014-12-15T18:04:23-05:00\tFile PHAT-crop-half-141211.tif opened\n2014-12-15T18:04:52-05:00\tFile PHAT-crop-10pct.tif saved\n2014-12-15T18:07:18-05:00\tFile PHAT-crop-25pct.tif saved\n",
+                "FileSize": "20 MB",
+                "MIMEType": "image\/jpeg",
+                "ColorMode": "RGB",
+                "ImageSize": "6000x1918",
+                "ColorSpace": "sRGB",
+                "CreateDate": "2014:12:01 09:54:19-05:00",
+                "DocumentID": "xmp.did:F0F26FAB212068118C14BB05D8A4E800",
+                "ImageWidth": 6000,
+                "InstanceID": "xmp.iid:0A801174072068118083B6528FE82A35",
+                "XMPToolkit": "Adobe XMP Core 5.3-c011 66.145661, 2012\/02\/06-14:56:27        ",
+                "CreatorTool": "Adobe Photoshop CS6 (Macintosh)",
+                "HistoryWhen": {
+                    "0": "2014:12:01 09:54:19-05:00",
+                    "1": "2014:12:08 17:42-05:00",
+                    "2": "2014:12:11 10:28:51-05:00",
+                    "4": "2014:12:16 15:26:29-05:00",
+                    "6": "2014:12:16 15:27:51-05:00"
+                },
+                "ImageHeight": 1918,
+                "MetadataDate": "2014:12:16 15:27:51-05:00",
+                "HistoryAction": {
+                    "0": "created",
+                    "1": "saved",
+                    "3": "converted",
+                    "4": "derived"
+                },
+                "HistoryChanged": [
+                    "\/"
+                ],
+                "ICCProfileName": "sRGB IEC61966-2.1",
+                "DocumentAncestors": [
+                    "5E4F3528C4AFD0BF1F492354AA7AE319",
+                    "uuid:7FF50DD4ABF5E311AB82E8C0E55B5C22",
+                    "xmp.did:01801174072068118C14BB05D8A4E800",
+                    "xmp.did:03801174072068118083E2E2CA8D418F",
+                    "xmp.did:04801174072068118083B4020B87D0E4",
+                    "xmp.did:C4CFCC1847206811822ACA1BB6E48E5B",
+                    "xmp.did:F0F26FAB212068118C14BB05D8A4E800"
+                ],
+                "HistoryInstanceID": [
+                    "xmp.iid:F0F26FAB212068118C14BB05D8A4E800",
+                    "xmp.iid:DA849DFC1D2068118C14A6892336BA04",
+                    "xmp.iid:F4F4EDC715206811822AB17727DAACAF",
+                    "xmp.iid:F5F4EDC715206811822AB17727DAACAF",
+                    "xmp.iid:07801174072068118083B6528FE82A35",
+                    "xmp.iid:08801174072068118083B6528FE82A35",
+                    "xmp.iid:0A801174072068118083B6528FE82A35"
+                ],
+                "HistoryParameters": [
+                    "from application\/vnd.adobe.photoshop to image\/tiff",
+                    "converted from application\/vnd.adobe.photoshop to image\/tiff",
+                    "from image\/tiff to image\/jpeg",
+                    "converted from image\/tiff to image\/jpeg"
+                ],
+                "OriginalDocumentID": "xmp.did:F0F26FAB212068118C14BB05D8A4E800",
+                "HistorySoftwareAgent": [
+                    "Adobe Photoshop CS6 (Macintosh)"
+                ],
+                "DerivedFromDocumentID": "xmp.did:F0F26FAB212068118C14BB05D8A4E800",
+                "DerivedFromInstanceID": "xmp.iid:07801174072068118083B6528FE82A35",
+                "DerivedFromOriginalDocumentID": "xmp.did:F0F26FAB212068118C14BB05D8A4E800"
+            },
+            "sequence": 2,
+            "flv:pronom": {
+                "label": "Raw JPEG Stream",
+                "mimetype": "image\/jpeg",
+                "pronom_id": "info:pronom\/fmt\/41",
+                "detection_type": "signature"
+            },
+            "dr:mimetype": "image\/jpeg",
+            "crypHashFunc": "md5",
+            "flv:identify": {
+                "1": {
+                    "width": "6000",
+                    "format": "JPEG",
+                    "height": "1918",
+                    "orientation": "TopLeft"
+                }
+            }
+        }
+    },
+    "duration": "",
+    "language": [],
+    "documents": [],
+    "edm_agent": [],
+    "publisher": "",
+    "ismemberof": [],
+    "creator_lod": [
+        {
+            "name_uri": "http:\/\/id.loc.gov\/authorities\/names\/n78087581",
+            "role_uri": "http:\/\/id.loc.gov\/vocabulary\/relators\/cre",
+            "agent_type": "corporate",
+            "name_label": "United States. National Aeronautics and Space Administration",
+            "role_label": "Creator"
+        },
+        {
+            "name_uri": "http:\/\/id.loc.gov\/authorities\/names\/n50079617",
+            "role_uri": "http:\/\/id.loc.gov\/vocabulary\/relators\/cre",
+            "agent_type": "corporate",
+            "name_label": "European Space Agency",
+            "role_label": "Creator"
+        }
+    ],
+    "description": "\"The largest NASA Hubble Space Telescope image ever assembled, this sweeping bird\u2019s-eye view of a portion of the Andromeda galaxy (M31) is the sharpest large composite image ever taken of our galactic next-door neighbor. Though the galaxy is over 2 million light-years away, The Hubble Space Telescope is powerful enough to resolve individual stars in a 61,000-light-year-long stretch of the galaxy\u2019s pancake-shaped disk. ...\r\n\r\nThe panorama is the product of the Panchromatic Hubble Andromeda Treasury (PHAT) program. Images were obtained from viewing the galaxy in near-ultraviolet, visible, and near-infrared wavelengths, using the Advanced Camera for Surveys and the Wide Field Camera 3 aboard Hubble. This cropped view shows a 48,000-light-year-long stretch of the galaxy in its natural visible-light color, as photographed with Hubble's Advanced Camera for Surveys in red and blue filters July 2010 through October 2013.\"\r\n-full description available at: https:\/\/hubblesite.org\/image\/3476\/gallery\/73-phat",
+    "interviewee": [],
+    "interviewer": [],
+    "subject_loc": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85004924",
+            "label": "Andromeda Galaxy"
+        },
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85125947",
+            "label": "Space photography"
+        }
+    ],
+    "website_url": "",
+    "as:generator": {
+        "type": "Create",
+        "actor": {
+            "url": "http:\/\/localhost:8001\/form\/default-descriptive-metadata",
+            "name": "default_descriptive_metadata",
+            "type": "Service"
+        },
+        "endTime": "2021-01-08T12:53:35-05:00",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+    },
+    "date_created": "2015-01-05",
+    "issue_number": [],
+    "date_published": "",
+    "subjects_local": [],
+    "term_aat_getty": [],
+    "ap:entitymapping": {
+        "entity:file": [
+            "images",
+            "documents",
+            "audios",
+            "videos",
+            "models",
+            "upload_associated_warcs"
+        ],
+        "entity:node": [
+            "ismemberof"
+        ]
+    },
+    "local_identifier": "",
+    "subject_wikidata": [],
+    "rights_statements": "In Copyright - Educational Use Permitted",
+    "geographic_location": null,
+    "subject_lcgft_terms": [],
+    "upload_associated_warcs": [],
+    "strawberry_field_widget_id": "default_descriptive_metadata",
+    "subject_lcnaf_personal_names": [],
+    "subject_lcnaf_corporate_names": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/names\/n91011423",
+            "label": "Hubble Space Telescope (Spacecraft)"
+        },
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/names\/n82165594",
+            "label": "Space Telescope Science Institute (U.S.)"
+        }
+    ],
+    "subjects_local_personal_names": [],
+    "subject_lcnaf_geographic_names": []
+}
