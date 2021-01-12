@@ -1,0 +1,92 @@
+{
+    "type": "Book",
+    "label": "Anne of Green Gables : Chapters 1 and 2",
+    "owner": "Library of Congress Center for the Book",
+    "audios": [],
+    "images": [],
+    "models": [],
+    "rights": "",
+    "videos": [],
+    "creator": [],
+    "duration": "",
+    "language": [
+        "English"
+    ],
+    "documents": [],
+    "edm_agent": [],
+    "publisher": "",
+    "ismemberof": [],
+    "creator_lod": [
+        {
+            "name_uri": "http:\/\/id.loc.gov\/authorities\/names\/n81018346",
+            "role_uri": "http:\/\/id.loc.gov\/vocabulary\/relators\/aut",
+            "agent_type": "personal",
+            "name_label": "Montgomery, L. M. (Lucy Maud), 1874-1942",
+            "role_label": "Author"
+        }
+    ],
+    "description": "An orphan girl's adventures on Prince Edward Island, Canada.",
+    "interviewee": [],
+    "interviewer": [],
+    "subject_loc": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh2008108726",
+            "label": "Orphans--Juvenile fiction"
+        }
+    ],
+    "website_url": "",
+    "as:generator": {
+        "type": "Update",
+        "actor": {
+            "url": "http:\/\/localhost:8001\/form\/default-descriptive-metadata",
+            "name": "default_descriptive_metadata",
+            "type": "Service"
+        },
+        "endTime": "2021-01-08T14:22:44-05:00",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+    },
+    "date_created": "",
+    "issue_number": [],
+    "date_published": "2012-08-01",
+    "subjects_local": [],
+    "term_aat_getty": [],
+    "ap:entitymapping": {
+        "entity:file": [
+            "images",
+            "documents",
+            "audios",
+            "videos",
+            "models",
+            "upload_associated_warcs"
+        ],
+        "entity:node": [
+            "ismemberof"
+        ]
+    },
+    "local_identifier": "",
+    "subject_wikidata": [
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q771213",
+            "label": "Anne Shirley"
+        },
+        {
+            "uri": "http:\/\/www.wikidata.org\/entity\/Q565911",
+            "label": "Anne of Green Gables"
+        }
+    ],
+    "rights_statements": "In Copyright - Educational Use Permitted",
+    "geographic_location": null,
+    "subject_lcgft_terms": [],
+    "upload_associated_warcs": [],
+    "strawberry_field_widget_id": "default_descriptive_metadata",
+    "subject_lcnaf_personal_names": [],
+    "subject_lcnaf_corporate_names": [],
+    "subjects_local_personal_names": [],
+    "subject_lcnaf_geographic_names": [
+        {
+            "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh85106713",
+            "label": "Prince Edward Island (Prince Edward Islands)"
+        }
+    ]
+}
