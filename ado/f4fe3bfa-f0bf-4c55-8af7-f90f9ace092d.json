@@ -1,13 +1,18 @@
 {
     "type": "WebPage",
     "label": "Retro Grinnell Web Site",
-    "owner": "",
+    "owner": "Grinnell College",
+    "warcs": [],
     "audios": [],
     "images": [],
     "models": [],
+    "rights": "",
     "videos": [],
-    "warcs": [],
-    "creator": "Grinnell College",
+    "creator": [],
+    "duration": "",
+    "language": [
+        "English"
+    ],
     "documents": [],
     "edm_agent": [
         {
@@ -18,30 +23,43 @@
             "role_label": "contributor"
         }
     ],
-    "ismemberof": null,
+    "publisher": "",
+    "ismemberof": [],
+    "creator_lod": [
+        {
+            "name_uri": "http:\/\/id.loc.gov\/vocabulary\/organizations\/iagg",
+            "role_uri": "http:\/\/id.loc.gov\/vocabulary\/relators\/cre",
+            "agent_type": "corporate",
+            "name_label": "Grinnell College",
+            "role_label": "Creator"
+        }
+    ],
     "description": "This is a WARC capture of http:\/\/retro.grinnell.edu from 03-Aug-2016.",
+    "interviewee": [],
+    "interviewer": [],
     "subject_loc": [
         {
             "uri": "http:\/\/id.loc.gov\/authorities\/subjects\/sh2007000528",
             "label": "Web archiving"
         }
     ],
+    "website_url": "http:\/\/retro.grinnell.edu\/",
     "as:generator": {
-        "type": "Create",
+        "type": "Update",
         "actor": {
             "url": "http:\/\/localhost:8001\/form\/descriptive-metadata",
             "name": "descriptive_metadata",
             "type": "Service"
         },
-        "endTime": "2020-07-08T14:50:59-04:00",
+        "endTime": "2021-01-13T15:53:44-05:00",
         "summary": "Generator",
         "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
     },
+    "date_created": "2016-08-03",
+    "issue_number": [],
     "date_published": "2020-07-08",
-    "term_aat_getty": {
-        "uri": "http:\/\/vocab.getty.edu\/aat\/300054627",
-        "label": "archiving"
-    },
+    "subjects_local": [],
+    "term_aat_getty": [],
     "ap:entitymapping": {
         "entity:file": [
             "images",
@@ -49,10 +67,13 @@
             "audios",
             "videos",
             "models",
-            "warcs"
+            "warcs",
+            "upload_associated_warcs"
+        ],
+        "entity:node": [
+            "ismemberof"
         ]
     },
-    "website_url": "http:\/\/retro.grinnell.edu/",
     "local_identifier": "grinnell:17289",
     "subject_wikidata": [
         {
@@ -60,6 +81,7 @@
             "label": "web archiving"
         }
     ],
+    "rights_statements": "In Copyright - Educational Use Permitted",
     "geographic_location": {
         "lat": "41.75111985",
         "lng": "-92.719848632786",
@@ -78,5 +100,11 @@
         "neighbourhood": "",
         "state_district": ""
     },
-    "strawberry_field_widget_id": "descriptive_metadata"
+    "subject_lcgft_terms": [],
+    "upload_associated_warcs": [],
+    "strawberry_field_widget_id": "descriptive_metadata",
+    "subject_lcnaf_personal_names": [],
+    "subject_lcnaf_corporate_names": [],
+    "subjects_local_personal_names": [],
+    "subject_lcnaf_geographic_names": []
 }
