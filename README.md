@@ -3,7 +3,7 @@ A repository for demo Archipelago Digital Objects, Metadata Resources, example M
 
 # Two-Step Demo Content Ingest
 
-The demo Archipelago Digital Objects found here are used for the Two-Step Demo content ingest below. This same [Two-Step Demo content ingest guide](https://github.com/esmero/archipelago-deployment/blob/1.0.0-RC1/docs/democontent.md) can also be found in the [Archipelago Deployment repo](https://github.com/esmero/archipelago-deployment).
+The demo Archipelago Digital Objects found in this repository are used for the Two-Step Demo content ingest below. This same [Two-Step Demo content ingest guide](https://github.com/esmero/archipelago-deployment/blob/1.0.0-RC1/docs/democontent.md) can also be found in the [Archipelago Deployment repository](https://github.com/esmero/archipelago-deployment).
 
 ## Adding Demo Archipelago Digital Objects (ADOs) to your Repository
 
