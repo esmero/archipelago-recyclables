@@ -1,23 +1,23 @@
 # archipelago-recyclables
 A repository for demo Archipelago Digital Objects, Metadata Resources, example Metadata Twig Templates, Ingest Webforms and also Use cases. 
 
-# Two-Step Demo Content Ingest
+## Two-Step Demo Content Ingest
 
 The demo Archipelago Digital Objects found in this repository are used for the Two-Step Demo content ingest below. This same [Two-Step Demo content ingest guide](https://github.com/esmero/archipelago-deployment/blob/1.0.0-RC1/docs/democontent.md) can also be found in the [Archipelago Deployment repository](https://github.com/esmero/archipelago-deployment).
 
-## Adding Demo Archipelago Digital Objects (ADOs) to your Repository
+### Adding Demo Archipelago Digital Objects (ADOs) to your Repository
 
 We make this optional since we feel  not everyone wants to have Digital Objects from other people using space in their system. 
 Still, if you are new to Archipelago we encourage you to do this. Its a simply way to get started without thinking too much. 
 You can learn and test. Then delete and move over. 
 
-## Prerequisites
+### Prerequisites
 
-### A running Archipelago 1.0-Beta3 or higher.
+#### A running Archipelago 1.0-Beta3 or higher.
 - You installed it either via the Step by Step [deployment on OSX](osx.md), the one for [Ubuntu](ubuntu.md) or using your secret powers directly on a VM/Metal/Cloud/EC2 or even a raspberryPI.
 - You followed the guides without being too creative which means you have a `jsonapi` drupal user and you can login and out of your server.
 
-## Step 1: Get the content
+### Step 1: Get the content
 
 Go into your `archipelago-deployment` folder and into the `d8content` folder that is inside it. E.g
 
@@ -26,7 +26,7 @@ cd archipelago-deployment/d8content
 git clone https://github.com/esmero/archipelago-recyclables
 ```
 
-## Step 2: Ingest the Objects
+### Step 2: Ingest the Objects
 
 - If running Docker execute:
 
@@ -72,15 +72,15 @@ drush archipelago:jsonapi-ingest /var/www/html/d8content/archipelago-recyclables
 
 What you want here is to modify/replace the absolute paths that point your demo objects (.json) and their assets (folders with the same name). Basically replace every entry of `/var/www/html/d8content/archipelago-recyclables/` with the path to `archipelago-recyclables`
 
-### Need help? Blue Screen? Missed a step? Need a hug? Another Hug?
+#### Need help? Blue Screen? Missed a step? Need a hug? Another Hug?
 If you have trouble running this or see errors or need help with a step (its only two steps), please let us know (ASAP!). You can either open an `issue` in this repository or use the [Google Group](https://groups.google.com/forum/#!forum/archipelago-commons). We are here to help.
 
-## Caring & Coding + Fixing
+### Caring & Coding + Fixing
 
 * [Diego Pino](https://github.com/DiegoPino)
 * [Giancarlo Birello](https://github.com/giancarlobi)
 
-## License
+### License
 
 [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)
 
