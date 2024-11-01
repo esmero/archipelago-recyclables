@@ -12,7 +12,7 @@
 echo -ne "Deploying Set of Demo Objects to your Archipelago, please wait until this is done before having a coffee\n"
 echo -ne "Running as " && whoami;
 # Means Drush can read the site!
-drush status bootstrap | grep -q Successful;
+drush status --fields=bootstrap | grep -q Successful;
 (($? == 0)) && { 
 drush archipelago:jsonapi-ingest /var/www/html/d8content/archipelago-recyclables/ado/0c2dc01a-7dc2-48a9-b4fd-3f82331ec803.json --uuid=0c2dc01a-7dc2-48a9-b4fd-3f82331ec803 --bundle=digital_object --uri=http://esmero-web --files=/var/www/html/d8content/archipelago-recyclables/ado/0c2dc01a-7dc2-48a9-b4fd-3f82331ec803 --user=jsonapi --password=jsonapi --moderation_state=published;
 drush archipelago:jsonapi-ingest /var/www/html/d8content/archipelago-recyclables/ado/1c7fa0de-3ee6-4fb1-aa8f-b272d44827e4.json --uuid=1c7fa0de-3ee6-4fb1-aa8f-b272d44827e4 --bundle=digital_object --uri=http://esmero-web --files=/var/www/html/d8content/archipelago-recyclables/ado/1c7fa0de-3ee6-4fb1-aa8f-b272d44827e4 --user=jsonapi --password=jsonapi --moderation_state=published;
