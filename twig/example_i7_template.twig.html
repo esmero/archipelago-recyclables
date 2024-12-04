@@ -1,0 +1,624 @@
+{#- This AMI Metadata Display template is meant to serve as base/example/learning oportunity for your I7 migration needs, but is not a drop-in-replacement
+nor meant to solve a complete migration. It requires you to properly understand your source metadata (CSV) and your destination JSON based on your own 
+needs and reality, and is shared under a "use under your own risk" disclaimer. -#}
+{
+   {# updated by Diego Nov 14th 2024, improves date processing #}
+   {#- Summer-or-is-it-Spring 2024 
+   This template began its life (of joy) as a copy of the General DCMNY I7 AMI Ingest Template prepared by Allison & Diego 
+   and was intended for general DCMNY-specific I7 Solr Importer reference/demonstration purposes.
+   Original DCMNY template last updated March 2022: creator_lod building + LoD sourcing for various elements. -#}
+    "type": {{ data.type|json_encode|raw }},
+    {#- RL 2024-11-19 replaced "mods_titleinfo_title" with "fgs_label" to get titles of children -#}
+    "label": {{ data.fgs_label|json_encode|raw }},
+    {#- Optional example showing how to skip OCR Post Processing based on a metadata condition *~* 
+    ap:sortfiles == "index" is added automatically by AMI if absent. But good to be verbose here so you can 
+    learn more keys, the other option for that one is "natural" which will use the Filename itself to sort.
+    The example snipper below will set the 'ap:nopost' key for the `ocr` process if the source CSV column contains
+    a column header for 'transcript_type' and a value of "handwritten" present.
+    In other words, if an Object Row in the Source CSV has "handwritten" in 'transcript_type', then this
+    'ap:nopost' key will ensure the OCR Post-Processing does not apply to the Digital Object when ingested via AMI.
+    -#}
+    {%- if (data.transcript_type|trim|lower) == "handwritten" -%}
+    "ap:tasks": {
+       "ap:sortfiles": "index",
+       "ap:nopost": [
+         "ocr"
+       ]
+    },
+    {%- endif -%}
+    {%- if data.transcript_type|length > 0 -%}
+    "transcript_type": {{ data.transcript_type|json_encode|raw }},
+    {%- endif -%}
+    {% if data.mods_titleinfo_alternative_title|length > 0 %}
+    "title_info_alternative_title": {{ data.mods_titleinfo_alternative_title|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_abstract|length > 0 %}
+    "description": {{ data.mods_abstract|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_abstract_description|length > 0 %}
+    "description": {{ data.mods_abstract_description|split('|@|')|json_encode|raw }},
+    {% endif %}
+{#- DATES START: beginning of advanced TWIG setup here, for all of the various date elements in the source data.
+- We have ranges
+- We have point dates
+- We have qualifiers that apply to all
+- Semantics, created or issued.
+
+~ to indicate approximate
+? to indicate uncertain or inferred dates
+% to indicate uncertain and approximate -- THIS does not apply from MODS guidelines
+
+approximate – The date is approximate (not guaranteed to be exact).
+inferred – The date has not been transcribed directly from the resource.
+questionable – The date is questionable, e.g. "1972?".
+
+mods_originInfo_encoding_w3cdtf_keyDate_yes_point_start_qualifier_approximate_dateCreated
+mods_originInfo_*_*_![yes_point]_end_*_dateCreated
+ - also take in account as show in the example above the ones that have no properties e.g mods_originInfo_dateCreated
+ - https://github.com/ProfessionalWiki/EDTF/blob/master/tests/Functional/EnglishHumanizationTest.php
+ - Check also mods_note_dateuncontrolled
+Replace all these with a dash
+The values 21, 22, 23, 24 may be used used to signify ' Spring', 'Summer', 'Autumn', 'Winter', respectively, in place of a month value (01 through 12) for a year-and-month format string.
+Example 
+2001-21     Spring, 2001
+The values 25, 26, 27, 28
+2001-25     Spring (Northern Hemisphere), 2001
+Sub-year groupings
+Level 2 extends the season feature of Level 1 to include the following sub-year groupings.
+21     Spring (independent of location)
+22     Summer (independent of location)
+23     Autumn (independent of location)
+24     Winter (independent of location)
+25     Spring - Northern Hemisphere 
+26     Summer - Northern Hemisphere
+27     Autumn - Northern Hemisphere
+28     Winter - Northern Hemisphere 
+29     Spring - Southern Hemisphere
+30     Summer - Southern Hemisphere
+31     Autumn - Southern Hemisphere
+32     Winter - Southern Hemisphere 
+33     Quarter 1 (3 months in duration)
+34     Quarter 2 (3 months in duration)
+35     Quarter 3 (3 months in duration)
+36     Quarter 4 (3 months in duration)
+37     Quadrimester 1 (4 months in duration)
+38     Quadrimester 2 (4 months in duration)
+39     Quadrimester 3 (4 months in duration)
+40     Semestral 1 (6 months in duration)
+41     Semestral 2 (6 months in duration)
+
+Add a switch for hemisphere.
+#}
+{%- set date_types = ['datecreated', 'dateissued', 'copyrighteddate', 'dateother', 'datevalid'] -%}
+{%- set date_qualifiers_and_protected = ['encoding_w3cdtf','qualifier','keydate_no','keydate_yes','point_start','point_end', 'end','start','inferred', 'questionable', 'approximate'] -%}
+    {%- for date_type in date_types %}
+        {%- set date_edtf_string_per_event_type = {"NONE":{"date_edtf_string":null,"date_edtf_string_start":null,"date_edtf_string_end":null}} -%}
+        {#- THIS IS the one you want to use in the output 'date_edtf_string' -#}
+        {%- set date_edtf_string = null -%}
+        {%- set date_edtf_string_start = null -%}
+        {%- set date_edtf_string_end = null -%}
+        {# Key is the HEADER VALUE in the CSV #}
+        {%- for key,value in data -%}
+            {%- if key starts with 'mods_origininfo_' 
+                  and key ends with date_type 
+                  and key != 'mods_origininfo_'~ date_type -%}
+                  {% set date_value_single =  value is not iterable ? (value|default('')|split('|@|')|last) : value|last %}
+                  {% if date_value_single|length > 0 %}
+                        {# Because sometimes a totally qualified and specific Date field might contain additionally extra values that are not needed (e.g a Circa for a field that is 
+                          already ending in _qualifier_approximate, we will shamelessly remove all those things #}
+                        {# ALLISON: If a date brings strange characters into it, this is where you clean it up #}
+                        {% set date_value_single = date_value_single|replace({"circa":"", "Circa":"", "c.":""})|trim %}
+                        {% set date_value_single = date_value_single|replace({"0s":"X"}) %}
+                        {% set date_event_type = "NONE" -%}
+                        {% set date_event_type = key|replace({'mods_origininfo_':'', (date_type):''}) %}
+                        {% for qualifier in date_qualifiers_and_protected %}
+                            {% set date_event_type = date_event_type|replace({(qualifier):''})|trim('_') %}
+                        {% endfor %}
+                        {% if date_event_type starts with 'eventtype' %}
+                            {% set date_event_type = date_event_type|replace({'eventtype_':'','_':' '})|trim -%}
+                        {% else %}
+                        {% set date_event_type = "NONE" -%}
+                {% endif %}
+              {# will split mods_originInfo_encoding_w3cdtf_keyDate_yes_point_start_qualifier_approximate_datecreated #}
+              {%- set date_name_parts = key|split("_") -%}
+              {#- if after splitting by _ we might have random number of pieces -#}
+              
+              {%- set edtf_qualifier = '' -%}
+              {%- if "qualifier" in date_name_parts -%}
+                {#- fetch the qualifier -#}
+                {%- set edtf_qualifier = date_name_parts[(date_name_parts|length)-2] -%}
+                {%- if edtf_qualifier in ['inferred', 'questionable'] -%}
+                  {%- set edtf_qualifier = '?' -%}
+                {%- elseif edtf_qualifier == 'approximate' -%}
+                  {%- set edtf_qualifier = '~' -%}
+                {%- endif -%}
+              {%- endif -%}
+              {#- if '/' in date_edtf_string -%}
+              	{%- set date_edtf_string_start = 
+              {%- endif -#}
+              
+              {%- if 'start' in date_name_parts -%}
+                {%- set date_edtf_string_start = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier -%}
+              {% elseif 'end' in date_name_parts  %}
+                {%- set date_edtf_string_end = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier  -%}
+              {%- else -%}
+                {%- set date_edtf_string = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier -%}
+              {%- endif -%}
+            {# MERGING ARRAYS IN TWIG IS TRICKY SO BEFORE WE DO THAT I WILL FETCH PREVIOUS DATA JUST IN CASE #}
+              {% set current_edtf_string_array = {
+            (date_event_type) : {
+            "date_edtf_string": current_edtf_string_array["date_event_type"]["date_edtf_string"] ?? date_edtf_string, 
+            "date_edtf_string_start": current_edtf_string_array["date_event_type"]["date_edtf_string_start"] ?? date_edtf_string_start, 
+            "date_edtf_string_end" : current_edtf_string_array["date_event_type"]["date_edtf_string_end"] ?? date_edtf_string_end
+              }
+            } %} 
+              {# NOW after restoring the previous defaults/saved values we can merge/accumulate #}
+              {% set date_edtf_string_per_event_type = date_edtf_string_per_event_type|merge(current_edtf_string_array) %}     
+              {#- END if check if its actually a date header -#} 
+            {%- endif -%}{# closes line 86 #}
+          {%- endif -%}{# closes line 82 #}
+        {%- endfor -%}
+     {# Now iterated over all stored data keyed by event type (being NONE no event type #}
+     {% for event_type,date_edtf_strings in date_edtf_string_per_event_type %}
+        {%- set date_edtf_string_start = date_edtf_strings['date_edtf_string_start'] %}
+        {%- set date_edtf_string_end = date_edtf_strings['date_edtf_string_end'] %}
+        {{ date_edtf_string }}
+        {# If we have both, start and end, then we do not need single point data #}
+        {% if date_edtf_string_end is not empty and date_edtf_string_start is not empty %}
+        	{%- set date_edtf_string = "" %}
+        {% endif %}
+        {# If we have either start or end then something is missing #}
+        {% if date_edtf_string_end is not empty and date_edtf_string_start is not empty %}
+        	{%- set date_edtf_string = "" %}
+        {% endif %}
+        
+        
+        
+      {# NOTE: THIS BLOCK HANDLES EXCEPTION WHEN DATES WHEN THERE ARE NO SPECIFIC QUALIFIERS #}
+        {%- if date_edtf_string is empty and date_edtf_string_start is empty and date_edtf_string_end is empty -%}
+          {# Double check and only use the unqualified field IF nothing else exists, Diego! #}
+           
+          {#- Now with possible OK or deal with strange patterns 
+          - Ranges separated by - eg 2020-2021
+          - Full Dates separated by / eg 2020/12/24 or 24/12/2020
+          - Dates any part that contains an 's' replacing with an 0X or X%
+          - circa replacing with a ~
+          - ?
+          - [] replace with a ~
+          -#}
+          {%- set datecreated_parts_strange_cleaned = [] %}
+          {% set strange = null %}
+          {% set strange_character = null %}
+          {# before cleaning anything, check if already EDTF #}
+          {%- set datecreated_parts_attempt = data["mods_origininfo_" ~ date_type]|split('|@|')|last %}
+          {% set humanized = datecreated_parts_attempt|edtf_2_human_date('en') %}
+          {% set isedtf = humanized ? "edtf" : "free" %}  
+          {% if isedtf == "free" %}        
+            {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("-") %}
+            {% for datecreated_part_strange in datecreated_parts_strange %}
+              {% if datecreated_parts_strange|length == 2 and datecreated_part_strange|length >= 4 and datecreated_part_strange|length <= 5 %}
+                {% set strange = 'range-tilde' %}
+              {% else %}
+                {% set strange = null %}
+              {% endif %}
+            {% endfor %}
+            {% if not strange %}
+              {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("/") %}
+              {% for datecreated_part_strange in datecreated_parts_strange %}
+                {% if datecreated_parts_strange|length >= 2 and datecreated_part_strange|length == 2 %}
+                  {% set strange = 'slash' %}
+                {% endif %}
+                {% if datecreated_parts_strange|length >= 2 and datecreated_parts_strange[0]|length < 4 and datecreated_part_strange|length == 4 and loop.index == 2 %}
+                  {% set strange = 'slash_reversed' %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {#- Now check on a date item per item if strange characters apply -#}
+            {% for datecreated_part_strange in datecreated_parts_strange %}         
+              {% if datecreated_part_strange ends with 's' %}
+                {% set datecreated_parts_strange_cleaned_with_s = datecreated_part_strange|replace({"0s":"X"}) %}
+                {% set datecreated_parts_strange_cleaned_with_s = datecreated_parts_strange_cleaned_with_s|replace({"s":"%"}) %}
+                {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_parts_strange_cleaned_with_s]) %}
+                {% set strange_character = true %}
+                an s
+              {% elseif '[' in datecreated_part_strange %}
+                {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange|trim('][ ') ~ '~' ]) %}
+                {% set strange_character = true %}
+                a square bracket
+              {% elseif 'circa' in datecreated_part_strange or 'Circa' in datecreated_part_strange or 'c.' in datecreated_part_strange %}
+                {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange|replace({"circa":"~", "Circa":"~", "c.":"~"})]) %}
+                {% set strange_character = true %}
+                a circa
+              {% else %}
+                {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange]) %}          
+                {% set strange_character = true %}
+              {% endif %}
+           {% endfor %}   
+        {#- check if any of the strange complex scenarios apply -#}   
+         {% if strange == 'range-tilde' %}
+             {%- set date_edtf_string = datecreated_parts_strange_cleaned|join('/') %}
+         {% endif %}
+         {% if strange == 'slash' %}
+             {%- set date_edtf_string = datecreated_parts_strange_cleaned|join('-') %}
+         {% endif %}
+           {% if strange == 'slash_reversed' %}
+             {%- set date_edtf_string = datecreated_parts_strange_cleaned|reverse|join('-') %}
+         {% endif %}
+         {% if not strange %}
+             {% if strange_character %}
+               {% set datecreated_parts = datecreated_parts_strange_cleaned %}
+             {% endif %}
+             {%- set date_edtf_string = datecreated_parts|length == 1 ? datecreated_parts[0] : datecreated_parts[0] ~ '/' ~ datecreated_parts[1] -%} 
+        {% endif %}
+      {% else %}{# else of if isedtf == "free" %}  #}
+        {%- set date_edtf_string  = datecreated_parts_attempt %}
+      {% endif %}
+      {%- else -%} {# ELSE OF 150 #}
+          {# here finally join parts/start/end into date_edtf_string or use the already generated date_edtf_string #}
+         {% if (date_edtf_string_start|length > 0 or date_edtf_string_end|length > 0) %}
+            {% set date_edtf_string = date_edtf_string_start|default('')|trim ~ '/' ~ date_edtf_string_end|default('')|trim %}
+         {% endif %}
+      {%- endif -%}
+        {# ENDS the Event type for if any #}
+        {# Now the outpout #}
+        {%~ if date_edtf_string|length > 0 %}
+           {% if event_type == "NONE" %}
+              {% set date_key_name = "date_" ~ date_type|replace({"date":""})~ "_edtf" %}
+           {% else %}
+              {% set date_key_name = "date_" ~ event_type|trim|replace({" ":"_"}) ~ "_" ~ date_type|replace({"date":""})~ "_edtf" %}
+           {% endif %}
+     {{date_key_name|json_encode|raw}}: {
+        "date_to": "",
+        "date_free": {{ date_edtf_string|json_encode|raw }},
+        "date_from": "",
+        "date_type": "{{ date_edtf_string|edtf_2_human_date('en') ? "date_free" : "date_free" }}"
+        },
+       {% endif -%}
+       {% endfor -%}
+    {% endfor -%}
+ {#- DATES END ~#}
+    {#- "date_created_free": {{ data.mods_origininfo_datecreated|split('|@|')|json_encode|raw }}, -#}
+    {% if data.creators_contributors_unmapped|length > 0 %}
+    "creator": {{ data.creators_contributors_unmapped|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.creator_lod|length > 0 %}
+    "creator_lod": {{ data.creator_lod|json_encode|raw }},
+    {% endif %}
+ {#- FORMER - START Names from LoD and MODS CSV with/without URIS. -
+    ** Original logic for this more advanced Creator/Contributor setup removed in favor of more simplied, non-LoD approach. -#}
+  {# October 2024 Updated Example for DCPL
+    Simpler approach for Creator/Contributor mapping, based on DCPL data examples
+    - no agent_type info
+    - no uri's/ LoD reconciliation mapping 
+    - predefined 'creator' or 'contributor' roles only #}      
+    {%- if data['mods_name_creator_namepart'] is defined and not empty and data["mods_name_creator_namepart"]|length > 0 -%}
+      {% set creators = data["mods_name_creator_namepart"] is iterable ? data["mods_name_creator_namepart"] : data["mods_name_creator_namepart"]|split('|@|') %} 
+          "creator_lod": [
+                {% for creator in creators %}
+                {
+                    "name_uri": null,
+                    "agent_type": null,
+                    "name_label": {{ creator|json_encode|raw }},
+                    "role_label": "Creator",
+                    "role_uri": "http://id.loc.gov/vocabulary/relators/cre"
+                }
+                
+                {{ not loop.last ? ',' : '' }}
+                {% endfor %}
+            ],
+        {%- endif -%} 
+
+    {% if data.mods_origininfo_publisher|length > 0 %}
+    "publisher": {{ data.mods_origininfo_publisher|json_encode|raw }},
+    {% endif %}
+    {% if data.publisher_of_digital|length > 0 %}
+    "publisher_of_digital": {{ data.publisher_of_digital|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_origininfo_place_placeterm_text|length > 0 %}
+    "place_of_publication": {{ data.mods_origininfo_place_placeterm_text|json_encode|raw }},
+    {% endif %}
+    {# DCPL LF 2024-11-12 addded Source - mods_relateditem_original_titleinfo_title #}
+    {% if data.mods_relateditem_original_titleinfo_title|length > 0 %}
+    "source": {{ data.mods_relateditem_original_titleinfo_title|split('|@|')|json_encode|raw }},
+    {% endif %}
+ {# LF 2024-12-02 added |split('|@|')| to data.mods_relateditem_original_titleinfo_title #}
+ {#   {% if data.mods_language_languageterm|length > 0 %}
+	"language": {{ data.mods_language_languageterm|split('|@|')|json_encode|raw }},   
+    {% endif %} #}
+    {% if data.language|length > 0 %}
+	"language": {{ data.language|split('|@|')|json_encode|raw }},   
+    {% endif %}
+    {% if data.mods_language_languageterm_code|length > 0 %}
+	"language": {{ data.mods_language_languageterm_code|split('|@|')|json_encode|raw }},   
+    {% endif %}
+    {#DCPL LF 2024-11-12 updated to mods_language_languageterm_code
+    ~ Language information may also be sourced from:
+    - mods_language_languageTerm_code
+    - mods_language_languageTerm_text
+    - mods_language_languageterm_code_authority_iso639-2b
+    #}
+    "ismemberof": [],
+    "ispartof": [],
+    {% if data.sequence_id|length > 0 %}
+    "sequence_id": {{ data.sequence_id|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_note_ownership|length > 0 %}
+    "owner": {{ data.mods_note_ownership|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_identifier_local|length > 0 %}
+    "local_identifier": {{ data.mods_identifier_local|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {#- RL 2024-11-21 added statement for legacy handle URLs to display -#}
+    {% if data.mods_identifier_uri|length > 0 %}
+    "legacy_identifier_uri": {{ data.mods_identifier_uri|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {# RL 2024-11-13 created separate "if" conditions for mods_accessconditions with and w/o multiple values #}
+    {% if data.mods_accesscondition|length > 0 %}
+    	{% if '|@|' in data.mods_accesscondition %}
+        	"rights_statement": {{ data.mods_accesscondition|split('|@|')|json_encode|raw }},
+        {% else %}
+            "rights_statement": {{ data.mods_accesscondition|json_encode|raw }},
+        {% endif %}
+    {% endif %}
+    
+    {#DCPL LF 2024-11-12 added split and updated "rights_statement" to modes_accesscondition
+    {% if data.mods_accesscondition_local_rights_statements|length > 0 %}
+    "rights": {{ data.mods_accesscondition_local_rights_statements|json_encode|raw }},
+    {% endif %}
+    {#- Rights information may also be sourced from other elements such as:
+    - mods_accesscondition_use_and_reproduction
+    - mods_accessCondition_local_rights_statement
+    - mods_accessCondition_use_and_reproduction_xlinkhref
+    -#}
+    
+    
+    {# October 2024 Updated Example for DCPL   
+      - Subjects from mods_subject_topic with no LoD Reconciliation
+      #}
+   {% if data.mods_subject_topic|length > 0 %}
+   "subject_topic": {{ data.mods_subject_topic|split('|@|')|json_encode|raw }},
+   {% endif %}     
+    
+  {# Removed all other subject examples showing different LoD Reconciliation options for source spreadsheets
+    that may contain value_uris coming from a separate field in another repository environment #}  
+    
+{# <-- SUBJECTS: TOPICS #}
+  {#- LCSH -#}
+    {% if data.subject_loc|length > 0 %}
+    "subject_loc": {{ data.subject_loc|json_encode|raw }},
+    {% endif %}
+  {# October 2024 Updated Example for DCPL Note: just noting that this shows a very simple example of 
+    mapping for LoD Reconciliated Subjects. Adjust closing comment to use #}
+  {#  
+    {% if data.mods_subject_topic|length > 0 %}
+    "subject_loc": {{ data_lod.mods_subject_topic.loc_subjects_thing|json_encode|raw }},
+    {% endif %}
+  #}
+  {#- Wikidata: can be sourced from mods_subject_topic and mods_genre -#}
+    {% if subject_wikidata|length > 0 %}
+    "subject_wikidata": {{ subject_wikidata|json_encode|raw }},
+    {% endif %}       
+    {% set subject_wikidata = [] %}
+    {% for source, reconciliated in data_lod %}
+      {% if (('subject' in source) or ('genre' in source)) and reconciliated.wikidata_subjects_thing and reconciliated.wikidata_subjects_thing|length > 0 %}
+         {% set subject_wikidata = subject_wikidata|merge(reconciliated.wikidata_subjects_thing) %}
+      {% endif %}
+    {% endfor %}  
+  {#- Getty terms: sourced from mods_genre -#}
+    {% if data.term_aat_getty|length > 0 %}
+    "term_aat_getty": {{ data.term_aat_getty|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_genre|length > 0 %}
+    "term_aat_getty": {{ data_lod.mods_genre.getty_aat_terms|json_encode|raw }},
+    {% endif %}
+    {% if data.subject_lcgft_terms is iterable %}
+    "subject_lcgft_terms": {{ data.subject_lcgft_terms|json_encode|raw }},
+    {% endif %}
+  {#- Temporal subject terms -#} 
+  {% if data.mods_subject_temporal|length > 0 and data_lod.mods_subject_temporal.loc_subjects_thing|length > 0 %}
+    "subject_temporal": {{ data_lod.mods_subject_temporal.loc_subjects_thing|json_encode|raw }},
+    {% else %}
+  {% if data.mods_subject_temporal|length > 0 %}  
+    "subject_temporal": {{ data.mods_subject_temporal|json_encode|raw }},
+   {% endif %}
+   {% endif %}
+{#- October 2024 Updated Examples for DCPL: see notes below
+  <-- Geographic Info and terms:
+  Includes options for geographic info already present as
+  - full Nominatim or LCNAF JSON in source data
+  - reconciliated values against LC Geographic Names
+  - Nominatim lookup by value/label OR address **commented out for DCPL
+  - Nominatim lookup by coordinates **updated for DCPL data that has no separating comma, values like "38.8875 - 77.0364"
+  - **Added for DCPL example of mapping for mods_subject_hierarchicalgeographic_citysection
+  -#}
+  	{% if data.geographic_location|length > 0 %}
+    "geographic_location": {{ data.geographic_location|json_encode|raw }},
+    {% endif %}
+    {% if data.subject_lcnaf_geographic_names|length > 0 %}
+    "subject_lcnaf_geographic_names": {{ data.subject_lcnaf_geographic_names|json_encode|raw }},
+    {% endif %}
+    {#- map values reconciliated against LC Geographic Names into the subject_lcnaf_geographic_names key -#}
+    {% if data_lod.mods_subject_geographic.loc_geographicareas_thing|length > 0 %}
+    "subject_lcnaf_geographic_names": {{ data_lod.mods_subject_geographic.loc_geographicareas_thing|json_encode|raw }}, 
+    {% endif %}
+    {#- use value for Nominatim search -#}
+  {#  
+    {% if data.mods_subject_geographic|length > 0 %}
+    {% set nominatim_from_label = ami_lod_reconcile(data.mods_subject_geographic,'nominatim;thing;search','en') -%}
+    "geographic_location": {{ nominatim_from_label|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_note_address|length > 0 %}
+    {% set nominatim_from_label = ami_lod_reconcile(data.mods_note_address,'nominatim;thing;search','en') -%}
+    "geographic_location": {{ nominatim_from_label|json_encode|raw }},
+    {% endif %}
+  #}  
+    {#- use coordinates for Nominatim search, if provided -#}
+    {% if data.mods_subject_cartographics_coordinates|length > 0 %}
+        {% if '- ' in data.mods_subject_cartographics_coordinates %}
+   		   {% set mods_subject_cartographics_coordinates_clean = data.mods_subject_cartographics_coordinates|replace({'- ':', -'}) %}
+   		   {% set nominatim_from_coordinates = ami_lod_reconcile(mods_subject_cartographics_coordinates_clean,'nominatim;thing;reverse','en') %}
+       "geographic_location": {{ nominatim_from_coordinates|json_encode|raw }},
+	   {% endif %}
+    {% endif %}
+  {# October 2024 Updated Example for DCPL - simple mapping for mods_subject_hierarchicalgeographic_citysection
+  DCPL LF 2024-11-12 added mods_subject_hierarchicalgeographic_city and mods_subject_hierarchicalgeographic_region#}
+  {% if data.mods_subject_hierarchicalgeographic_citysection|length > 0 %}
+   "subject_hierarchical_geographic_city_section": {{ data.mods_subject_hierarchicalgeographic_citysection|split('|@|')|json_encode|raw }},  
+  {% endif %}
+  {% if data.mods_subject_hierarchicalgeographic_city|length > 0 %}
+   "subject_hierarchical_geographic_city": {{ data.mods_subject_hierarchicalgeographic_city|split('|@|')|json_encode|raw }},  
+  {% endif %}
+  {% if data.mods_subject_hierarchicalgeographic_region|length > 0 %}
+   "subject_hierarchical_geographic_region": {{ data.mods_subject_hierarchicalgeographic_region|split('|@|')|json_encode|raw }},  
+  {% endif %}
+    
+{#- Geographic Info and terms --> #}  
+{# SUBJECTS: TOPICS --> #}
+{# <-- SUBJECTS: PERSONAL NAMES #}
+   	 {#- 
+     	{% if data.mods_subject_name_personal_namepart|length > 0 %}
+    	"subject_lcnaf_personal_names": {{ data_lod.mods_subject_name_personal_namepart.loc_rdftype_personalname|json_encode|raw }},
+    	{% endif %} 
+      - #}
+    {# We initialize an empty variable named the same as our JSON key distination #}
+    {% set subject_lcnaf_personal_names = [] %}
+    {# We iterate over all Linked Open Data ('data_lod') and get the Source Key ('source') and for each source all reconciliated vocabs/values ('reconciliated') #}
+    {% for source, reconciliated in data_lod %}
+    {# We check if the 'source' contains the word subject AND if in reconciliated 'loc_rdftype_personalname' vocab exists and it has values #}
+      {% if ('subject' in source) and reconciliated.loc_rdftype_personalname and reconciliated.loc_rdftype_personalname|length > 0 %}
+         {# We add (|merge) to the previously initialized/or already with data 'subject_lcnaf_personal_names' variable the values found in 'reconciliated.loc_rdftype_personalname' #}
+         {% set subject_lcnaf_personal_names = subject_lcnaf_personal_names|merge(reconciliated.loc_rdftype_personalname) %}
+      {% endif %}
+    {% endfor %}  
+    {# We check if the new 'subject_lcnaf_personal_names' variable accumulated any data and is not empty #}
+    {% if subject_lcnaf_personal_names|length > 0 %}
+    {# We assign  'subject_lcnaf_personal_names' variable instead of any data coming from the original `data` or `data_lod` #}
+    "subject_lcnaf_personal_names": {{ subject_lcnaf_personal_names|json_encode|raw }},
+    {% endif %}
+{# SUBJECTS: PERSONAL NAMES --> #}
+{# <-- SUBJECTS: CORPORATE NAMES #}
+   	 {#- 
+     	{% if data.mods_subject_name_corporate_namepart|length > 0 %}
+    	"subject_lcnaf_corporate_names": {{ data_lod.mods_subject_name_corporate_namepart.loc_rdftype_corporatename|json_encode|raw }},
+    	{% endif %} 
+      - #}
+    {% set subject_lcnaf_corporate_names = [] %}
+    {% for source, reconciliated in data_lod %}
+      {% if ('subject' in source) and reconciliated.loc_rdftype_corporatename and reconciliated.loc_rdftype_corporatename|length > 0 %}
+         {% set subject_lcnaf_corporate_names = subject_lcnaf_corporate_names|merge(reconciliated.loc_rdftype_corporatename) %}
+      {% endif %}
+    {% endfor %}  
+    {% if subject_lcnaf_corporate_names|length > 0 %}
+    "subject_lcnaf_corporate_names": {{ subject_lcnaf_corporate_names|json_encode|raw }},
+    {% endif %}
+{#- Beggining of additional common I7 specific/sourced metadata elements. 
+    These elements are not represented in the default Archipelago webform(s) and display templates -#}
+    {% if data.mods_subject_cartographics_scale|length > 0 %}
+    "subject_cartographics_scale": {{ data.mods_subject_cartographics_scale|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.subjects_names_unmapped|length > 0 %}
+    "subjects_local_names": {{ data.subjects_names_unmapped|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.subjects_unmapped|length > 0 %}
+    "subjects_local": {{ data.subjects_unmapped|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_location_physical_location|length > 0 %}
+	  "physical_location": {{ data.mods_location_physical_location|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_physicaldescription_digitalorigin|length > 0 %}
+    "physical_description_digital_origin": {{ data.mods_physicaldescription_digitalorigin|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_physicaldescription_extent|length > 0 %}
+    "physical_description_extent": {{ data.mods_physicaldescription_extent|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_physicaldescription_internetmediatype|length > 0 %}
+    "physical_description_internet_media_type": {{ data.mods_physicaldescription_internetmediatype|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_physicaldescription_note_condition|length > 0 %}
+    "physical_description_note_condition": {{ data.mods_physicaldescription_note_condition|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_origininfo_place_placeTerm_text|length > 0 %}
+    "place_of_publication": {{ data.mods_origininfo_place_placeTerm_text|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_note|length > 0 %}
+    "note": {{ data.mods_note|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_note_publishinginfo|length > 0 %}
+    "note_publishinginfo": {{ data.mods_note_publishinginfo|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_relateditem_host_displaylabel|length > 0 %}
+    "related_item_host_display_label": {{ data.mods_relateditem_host_displaylabel|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_relatedItem_host_abstract|length > 0 %}
+    "related_item_host_abstract": {{ data.mods_relatedItem_host_abstract|json_encode|raw }},
+    {% endif %}    
+    {% if data.mods_relateditem_host_titleinfo_title|length > 0 %}
+    "related_item_host_title_info_title": {{ data.mods_relateditem_host_titleinfo_title|split('|@|')|json_encode|raw }},
+	{% endif %}
+    {% if data.mods_relateditem_host_location_url|length > 0 %}
+    "related_item_host_location_url": {{ data.mods_relateditem_host_location_url|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_relateditem_host_typeofresource|length > 0 %}
+    "related_item_host_type_of_resource": {{ data.mods_relateditem_host_typeofresource|json_encode|raw }},
+    {% endif %}
+    {% if data.related_item_host_location_url|length > 0 %}
+    "related_item_host_location_url": {{ data.related_item_host_location_url|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_relateditem_note|length > 0 %}
+    "related_item_note": {{ data.mods_relateditem_note|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_typeofresource|length > 0 %}
+    "mods_type_of_resource": {{ data.mods_typeofresource|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_recordinfo_languageofcataloging_languageterm_code|length > 0 %}
+    "mods_record_info_language_of_cataloging_language_term_code": {{ data.mods_recordinfo_languageofcataloging_languageterm_code|split(' |@| ')|json_encode|raw }},
+    {% endif %}
+    {% if data.issue_info|length > 0 %}
+    "issue_info": {{ data.issue_info|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_location_shelflocator|length > 0 %}
+    "shelflocator": {{ data.mods_location_shelflocator|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {% if data.mods_relateditem_series_titleinfo_title|length > 0 %}
+    "relateditem_series_titleinfo_title": {{ data.mods_relateditem_series_titleinfo_title|split('|@|')|json_encode|raw }},
+    {% endif %}
+    {#- May also be sourced from: mods_recordinfo_languageofcataloging_languageterm_code_authority_iso639-2b -#}
+    {#- General Administrative Elements : you may wish to carry over some of this data from your legacy environment. 
+    We strongly recommend keeping at least PID. 
+    Note: you do not need to reference/make editable all of these elements in your webform(s).
+    -#}
+    "legacy_PID": {{ data.pid|split('|@|')|json_encode|raw }},
+    "legacy_fgs_createddate": {{ data.fgs_createddate|json_encode|raw }},
+    {#- 
+    "fgs_label": {{ data.fgs_label|json_encode|raw }},
+    "rels_ext_hasmodel_uri": {{ data.rels_ext_hasmodel_uri|json_encode|raw }},
+    "fedora_datastreams": {{ data.fedora_datastreams|json_encode|raw }},
+    "fedora_datastream_latest_audit_mimetype": {{ data.fedora_datastream_latest_audit_mimetype|json_encode|raw }},
+    "fedora_datastream_latest_tn_mimetype": {{ data.fedora_datastream_latest_tn_mimetype|json_encode|raw }},
+    "rels_ext_ismemberofcollection_uri": {{ data.rels_ext_ismemberofcollection_uri|json_encode|raw }},
+    "fedora_datastream_latest_obj_mimetype": {{ data.fedora_datastream_latest_obj_mimetype|json_encode|raw }},
+    "fedora_datastream_latest_dc_mimetype": {{ data.fedora_datastream_latest_dc_mimetype|json_encode|raw }},
+    "fedora_datastream_latest_policy_mimetype": {{ data.fedora_datastream_latest_policy_mimetype|json_encode|raw }},
+    "fedora_datastream_latest_medium_size_mimetype": {{ data.fedora_datastream_latest_medium_size_mimetype|json_encode|raw }},
+    "rels_ext_ismanageablebyrole_literal": {{ data.rels_ext_ismanageablebyrole_literal|json_encode|raw }},
+    "rels_ext_ismanageablebyuser_literal": {{ data.rels_ext_ismanageablebyuser_literal|json_encode|raw }}, 
+    -#}
+	{#- End of I7 specific/sourced metadata elements -#}
+    "audios": [],
+    "images": [],
+    "models": [],
+    "videos": [],
+    "documents": [],
+    "as:generator": {
+        "type": "Create",
+        "actor": {
+            "url": {{ setURL|json_encode|raw }},
+            "name": "ami",
+            "type": "Service"
+        },
+        "endTime": "{{"now"|date("c")}}",
+        "summary": "Generator",
+        "@context": "https:\/\/www.w3.org\/ns\/activitystreams"
+     },
+    "upload_associated_warcs": []
+}
