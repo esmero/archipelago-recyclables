@@ -1,15 +1,10 @@
-{#- This AMI Metadata Display template is meant to serve as base/example/learning oportunity for your I7 migration needs, but is not a drop-in-replacement
-nor meant to solve a complete migration. It requires you to properly understand your source metadata (CSV) and your destination JSON based on your own 
-needs and reality, and is shared under a "use under your own risk" disclaimer. -#}
 {
-   {# updated by Diego Nov 14th 2024, improves date processing #}
    {#- Summer-or-is-it-Spring 2024 
    This template began its life (of joy) as a copy of the General DCMNY I7 AMI Ingest Template prepared by Allison & Diego 
    and was intended for general DCMNY-specific I7 Solr Importer reference/demonstration purposes.
    Original DCMNY template last updated March 2022: creator_lod building + LoD sourcing for various elements. -#}
     "type": {{ data.type|json_encode|raw }},
-    {#- RL 2024-11-19 replaced "mods_titleinfo_title" with "fgs_label" to get titles of children -#}
-    "label": {{ data.fgs_label|json_encode|raw }},
+    "label": {{ data.mods_titleinfo_title|json_encode|raw }},
     {#- Optional example showing how to skip OCR Post Processing based on a metadata condition *~* 
     ap:sortfiles == "index" is added automatically by AMI if absent. But good to be verbose here so you can 
     learn more keys, the other option for that one is "natural" which will use the Filename itself to sort.
@@ -92,40 +87,43 @@ Add a switch for hemisphere.
 {%- set date_types = ['datecreated', 'dateissued', 'copyrighteddate', 'dateother', 'datevalid'] -%}
 {%- set date_qualifiers_and_protected = ['encoding_w3cdtf','qualifier','keydate_no','keydate_yes','point_start','point_end', 'end','start','inferred', 'questionable', 'approximate'] -%}
     {%- for date_type in date_types %}
-        {%- set date_edtf_string_per_event_type = {"NONE":{"date_edtf_string":null,"date_edtf_string_start":null,"date_edtf_string_end":null}} -%}
-        {#- THIS IS the one you want to use in the output 'date_edtf_string' -#}
+    {%- set date_edtf_string_per_event_type = {"NONE":{"date_edtf_string":null,"date_edtf_string_start":null,"date_edtf_string_end":null}} -%}
+      {#- THIS IS the one you want to use in the output 'date_edtf_string' -#}
         {%- set date_edtf_string = null -%}
         {%- set date_edtf_string_start = null -%}
         {%- set date_edtf_string_end = null -%}
         {# Key is the HEADER VALUE in the CSV #}
         {%- for key,value in data -%}
-            {%- if key starts with 'mods_origininfo_' 
-                  and key ends with date_type 
-                  and key != 'mods_origininfo_'~ date_type -%}
-                  {% set date_value_single =  value is not iterable ? (value|default('')|split('|@|')|last) : value|last %}
-                  {% if date_value_single|length > 0 %}
-                        {# Because sometimes a totally qualified and specific Date field might contain additionally extra values that are not needed (e.g a Circa for a field that is 
-                          already ending in _qualifier_approximate, we will shamelessly remove all those things #}
-                        {# ALLISON: If a date brings strange characters into it, this is where you clean it up #}
-                        {% set date_value_single = date_value_single|replace({"circa":"", "Circa":"", "c.":""})|trim %}
-                        {% set date_value_single = date_value_single|replace({"0s":"X"}) %}
-                        {% set date_event_type = "NONE" -%}
-                        {% set date_event_type = key|replace({'mods_origininfo_':'', (date_type):''}) %}
-                        {% for qualifier in date_qualifiers_and_protected %}
-                            {% set date_event_type = date_event_type|replace({(qualifier):''})|trim('_') %}
-                        {% endfor %}
-                        {% if date_event_type starts with 'eventtype' %}
-                            {% set date_event_type = date_event_type|replace({'eventtype_':'','_':' '})|trim -%}
-                        {% else %}
-                        {% set date_event_type = "NONE" -%}
-                {% endif %}
+          {# OCT 14th WE CAN NOT SPLIT AN ARRAY, e.g if a cell had JSON so we check first 
+          Update October 27th: need to recheck for other various date combinations further.
+          #}		  
+          {%- if key starts with 'mods_origininfo_' 
+          and key ends with date_type 
+          and key != 'mods_origininfo_'~ date_type -%}
+            {% set date_value_single =  value is not iterable ? (value|default('')|split('|@|')|last) : value|last %}
+   			{% if date_value_single|length > 0 %}
+            {# Because sometimes a totally qualified and specific Date field might contain additionally extra values that are not needed (e.g a Circa for a field that is 
+            already ending in _qualifier_approximate, we will shamelessly remove all those things #}
+            {# ALLISON: If a date brings strange characters into it, this is where you clean it up #}
+              {% set date_value_single = date_value_single|replace({"circa":"", "Circa":"", "c.":""})|trim %}
+              {% set date_value_single = date_value_single|replace({"0s":"X"}) %}
+              {% set date_event_type = "NONE" -%}
+              {% set date_event_type = key|replace({'mods_origininfo_':'', (date_type):''}) %}
+              {# if key is "mods_originInfo_encoding_w3cdtf_keyDate_yes_point_start_qualifier_approximate_dateCreated" i end with "_encoding_w3cdtf_keydate_yes_point_start_qualifier_approximate_" #}
+              {% for qualifier in date_qualifiers_and_protected %}
+                 {% set date_event_type = date_event_type|replace({(qualifier):''})|trim('_') %}
+              {% endfor %}
+              {% if date_event_type starts with 'eventtype' %}
+            	{% set date_event_type = date_event_type|replace({'eventtype_':'','_':' '})|trim -%}
+              {% else %}
+                {% set date_event_type = "NONE" -%}
+              {% endif %}
               {# will split mods_originInfo_encoding_w3cdtf_keyDate_yes_point_start_qualifier_approximate_datecreated #}
               {%- set date_name_parts = key|split("_") -%}
               {#- if after splitting by _ we might have random number of pieces -#}
-              
               {%- set edtf_qualifier = '' -%}
               {%- if "qualifier" in date_name_parts -%}
-                {#- fetch the qualifier -#}
+              {#- fetch the qualifier -#}
                 {%- set edtf_qualifier = date_name_parts[(date_name_parts|length)-2] -%}
                 {%- if edtf_qualifier in ['inferred', 'questionable'] -%}
                   {%- set edtf_qualifier = '?' -%}
@@ -133,16 +131,12 @@ Add a switch for hemisphere.
                   {%- set edtf_qualifier = '~' -%}
                 {%- endif -%}
               {%- endif -%}
-              {#- if '/' in date_edtf_string -%}
-              	{%- set date_edtf_string_start = 
-              {%- endif -#}
-              
               {%- if 'start' in date_name_parts -%}
-                {%- set date_edtf_string_start = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier -%}
+                {%- set date_edtf_string_start = date_value_single ~ edtf_qualifier -%}
               {% elseif 'end' in date_name_parts  %}
-                {%- set date_edtf_string_end = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier  -%}
+                {%- set date_edtf_string_end = date_value_single ~ edtf_qualifier -%}
               {%- else -%}
-                {%- set date_edtf_string = edtf_qualifier in date_value_single ? date_value_single : date_value_single ~ edtf_qualifier -%}
+                {%- set date_edtf_string = date_value_single ~ edtf_qualifier -%}
               {%- endif -%}
             {# MERGING ARRAYS IN TWIG IS TRICKY SO BEFORE WE DO THAT I WILL FETCH PREVIOUS DATA JUST IN CASE #}
               {% set current_edtf_string_array = {
@@ -162,23 +156,16 @@ Add a switch for hemisphere.
      {% for event_type,date_edtf_strings in date_edtf_string_per_event_type %}
         {%- set date_edtf_string_start = date_edtf_strings['date_edtf_string_start'] %}
         {%- set date_edtf_string_end = date_edtf_strings['date_edtf_string_end'] %}
-        {{ date_edtf_string }}
         {# If we have both, start and end, then we do not need single point data #}
         {% if date_edtf_string_end is not empty and date_edtf_string_start is not empty %}
         	{%- set date_edtf_string = "" %}
         {% endif %}
-        {# If we have either start or end then something is missing #}
-        {% if date_edtf_string_end is not empty and date_edtf_string_start is not empty %}
-        	{%- set date_edtf_string = "" %}
-        {% endif %}
-        
-        
-        
       {# NOTE: THIS BLOCK HANDLES EXCEPTION WHEN DATES WHEN THERE ARE NO SPECIFIC QUALIFIERS #}
+      {#- If we had NO column for datecreated that had extra xml properties we will use data.mods_origininfo_datecreated -#}
         {%- if date_edtf_string is empty and date_edtf_string_start is empty and date_edtf_string_end is empty -%}
           {# Double check and only use the unqualified field IF nothing else exists, Diego! #}
-           
-          {#- Now with possible OK or deal with strange patterns 
+          {%- set datecreated_parts = data.mods_origininfo_datecreated|split("|@|") %}
+          {#- Now deal with strange patterns 
           - Ranges separated by - eg 2020-2021
           - Full Dates separated by / eg 2020/12/24 or 24/12/2020
           - Dates any part that contains an 's' replacing with an 0X or X%
@@ -189,76 +176,65 @@ Add a switch for hemisphere.
           {%- set datecreated_parts_strange_cleaned = [] %}
           {% set strange = null %}
           {% set strange_character = null %}
-          {# before cleaning anything, check if already EDTF #}
-          {%- set datecreated_parts_attempt = data["mods_origininfo_" ~ date_type]|split('|@|')|last %}
-          {% set humanized = datecreated_parts_attempt|edtf_2_human_date('en') %}
-          {% set isedtf = humanized ? "edtf" : "free" %}  
-          {% if isedtf == "free" %}        
-            {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("-") %}
-            {% for datecreated_part_strange in datecreated_parts_strange %}
-              {% if datecreated_parts_strange|length == 2 and datecreated_part_strange|length >= 4 and datecreated_part_strange|length <= 5 %}
-                {% set strange = 'range-tilde' %}
-              {% else %}
+          {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("-") %}
+          {% for datecreated_part_strange in datecreated_parts_strange %}
+             {% if datecreated_parts_strange|length == 2 and datecreated_part_strange|length >= 4 and datecreated_part_strange|length <= 5 %}
+               {% set strange = 'range-tilde' %}
+             {% else %}
                 {% set strange = null %}
+             {% endif %}
+          {% endfor %}
+          {% if not strange %}
+            {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("/") %}
+            {% for datecreated_part_strange in datecreated_parts_strange %}
+              {% if datecreated_parts_strange|length >= 2 and datecreated_part_strange|length == 2 %}
+                {% set strange = 'slash' %}
+              {% endif %}
+              {% if datecreated_parts_strange|length >= 2 and datecreated_part_strange|length == 4 and loop.index == 2 %}
+                {% set strange = 'slash_reversed' %}
               {% endif %}
             {% endfor %}
-            {% if not strange %}
-              {%- set datecreated_parts_strange = data["mods_origininfo_" ~ date_type]|split('|@|')|last|split("/") %}
-              {% for datecreated_part_strange in datecreated_parts_strange %}
-                {% if datecreated_parts_strange|length >= 2 and datecreated_part_strange|length == 2 %}
-                  {% set strange = 'slash' %}
-                {% endif %}
-                {% if datecreated_parts_strange|length >= 2 and datecreated_parts_strange[0]|length < 4 and datecreated_part_strange|length == 4 and loop.index == 2 %}
-                  {% set strange = 'slash_reversed' %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
+          {% endif %}
           {#- Now check on a date item per item if strange characters apply -#}
-            {% for datecreated_part_strange in datecreated_parts_strange %}         
-              {% if datecreated_part_strange ends with 's' %}
+          {% for datecreated_part_strange in datecreated_parts_strange %}         
+             {% if datecreated_part_strange ends with 's' %}
                 {% set datecreated_parts_strange_cleaned_with_s = datecreated_part_strange|replace({"0s":"X"}) %}
                 {% set datecreated_parts_strange_cleaned_with_s = datecreated_parts_strange_cleaned_with_s|replace({"s":"%"}) %}
                 {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_parts_strange_cleaned_with_s]) %}
                 {% set strange_character = true %}
-                an s
-              {% elseif '[' in datecreated_part_strange %}
+             {% elseif '[' in datecreated_part_strange %}
                 {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange|trim('][ ') ~ '~' ]) %}
                 {% set strange_character = true %}
-                a square bracket
-              {% elseif 'circa' in datecreated_part_strange or 'Circa' in datecreated_part_strange or 'c.' in datecreated_part_strange %}
+             {% elseif 'circa' in datecreated_part_strange or 'Circa' in datecreated_part_strange or 'c.' in datecreated_part_strange %}
                 {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange|replace({"circa":"~", "Circa":"~", "c.":"~"})]) %}
                 {% set strange_character = true %}
-                a circa
-              {% else %}
-                {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange]) %}          
-                {% set strange_character = true %}
-              {% endif %}
-           {% endfor %}   
+             {% else %}
+               {% set datecreated_parts_strange_cleaned = datecreated_parts_strange_cleaned|merge([datecreated_part_strange]) %}          
+               {% set strange_character = true %}
+             {% endif %}
+           {% endfor %}      
         {#- check if any of the strange complex scenarios apply -#}   
-         {% if strange == 'range-tilde' %}
+           {% if strange == 'range-tilde' %}
              {%- set date_edtf_string = datecreated_parts_strange_cleaned|join('/') %}
-         {% endif %}
-         {% if strange == 'slash' %}
+           {% endif %}
+           {% if strange == 'slash' %}
              {%- set date_edtf_string = datecreated_parts_strange_cleaned|join('-') %}
-         {% endif %}
+           {% endif %}
            {% if strange == 'slash_reversed' %}
              {%- set date_edtf_string = datecreated_parts_strange_cleaned|reverse|join('-') %}
-         {% endif %}
-         {% if not strange %}
+           {% endif %}
+           {% if not strange %}
              {% if strange_character %}
                {% set datecreated_parts = datecreated_parts_strange_cleaned %}
-             {% endif %}
+             {% endif %}     
              {%- set date_edtf_string = datecreated_parts|length == 1 ? datecreated_parts[0] : datecreated_parts[0] ~ '/' ~ datecreated_parts[1] -%} 
-        {% endif %}
-      {% else %}{# else of if isedtf == "free" %}  #}
-        {%- set date_edtf_string  = datecreated_parts_attempt %}
-      {% endif %}
-      {%- else -%} {# ELSE OF 150 #}
+           {% endif %} 
+        {%- else -%} {# ELSE OF 150 #}
           {# here finally join parts/start/end into date_edtf_string or use the already generated date_edtf_string #}
-         {% if (date_edtf_string_start|length > 0 or date_edtf_string_end|length > 0) %}
-            {% set date_edtf_string = date_edtf_string_start|default('')|trim ~ '/' ~ date_edtf_string_end|default('')|trim %}
-         {% endif %}
-      {%- endif -%}
+          {% if (date_edtf_string_start|length > 0 or date_edtf_string_end|length > 0) %}
+             {% set date_edtf_string = date_edtf_string_start|default('')|trim ~ '/' ~ date_edtf_string_end|default('')|trim %}
+          {% endif %}
+        {%- endif -%}
         {# ENDS the Event type for if any #}
         {# Now the outpout #}
         {%~ if date_edtf_string|length > 0 %}
@@ -271,7 +247,7 @@ Add a switch for hemisphere.
         "date_to": "",
         "date_free": {{ date_edtf_string|json_encode|raw }},
         "date_from": "",
-        "date_type": "{{ date_edtf_string|edtf_2_human_date('en') ? "date_free" : "date_free" }}"
+        "date_type": "date_free"
         },
        {% endif -%}
        {% endfor -%}
@@ -284,30 +260,123 @@ Add a switch for hemisphere.
     {% if data.creator_lod|length > 0 %}
     "creator_lod": {{ data.creator_lod|json_encode|raw }},
     {% endif %}
- {#- FORMER - START Names from LoD and MODS CSV with/without URIS. -
-    ** Original logic for this more advanced Creator/Contributor setup removed in favor of more simplied, non-LoD approach. -#}
-  {# October 2024 Updated Example for DCPL
-    Simpler approach for Creator/Contributor mapping, based on DCPL data examples
-    - no agent_type info
-    - no uri's/ LoD reconciliation mapping 
-    - predefined 'creator' or 'contributor' roles only #}      
-    {%- if data['mods_name_creator_namepart'] is defined and not empty and data["mods_name_creator_namepart"]|length > 0 -%}
-      {% set creators = data["mods_name_creator_namepart"] is iterable ? data["mods_name_creator_namepart"] : data["mods_name_creator_namepart"]|split('|@|') %} 
-          "creator_lod": [
-                {% for creator in creators %}
-                {
-                    "name_uri": null,
-                    "agent_type": null,
-                    "name_label": {{ creator|json_encode|raw }},
-                    "role_label": "Creator",
-                    "role_uri": "http://id.loc.gov/vocabulary/relators/cre"
-                }
-                
-                {{ not loop.last ? ',' : '' }}
-                {% endfor %}
-            ],
-        {%- endif -%} 
-
+    {#- START Names from LoD and MODS CSV with/without URIS. -#} 
+    {# Updated August 26th 2022, by Diego Pino. New checks/logic for mods_name_type_role_composed_or_more_namepart
+    - Check first IF for a given namepart there is already reconciliaton. 
+    - IF not i check if there is a matching valueuri, 
+    - IF NOT i leave the URL empty and use the value in the namepart (label) only?
+    - Only check/use mods_name_corporate/personal_namepart field IF there are no other fields
+    - That specify Roles. Since normally in ISLANDORA that field (no role) is a Catch all names one
+    - And in that case USE creator as the default ROLE
+    #}
+    {%~ set creator_lod = [] -%} 
+    {# Used to keep track of parts after the type (corporate, etc) that are no roles
+     but authority properties. Add more if you find them #}
+    {%  set roles_that_are_no_roles = ['authority_naf','authority_marcrelator',''] %}
+    {# Used to keep track of the ones that are reconciled already #}
+    {%- set name_has_creator_lod = [] -%}
+    {%- for key,value in data_lod -%}
+      {%- if key starts with 'mods_name_' and key ends with '_namepart' -%}
+      {# If there is mods_name_SOMETHING_namepart in data_lod we keep track so we 
+      do not try afterwards to use that Sources KEY from the CSV.
+      #}
+        {%- set name_has_creator_lod = name_has_creator_lod|merge([key]) -%}
+      {# Now we remove 'mods_name_' and '_namepart' #}
+        {%- set name_type_and_role = key|replace({'mods_name_':'', '_namepart':''}) -%}
+      {# We will only target personal or corporate. If any of those are missing we skip? #}
+        {% set name_type = null %}
+        {%- if name_type_and_role starts with 'personal_' -%}
+           {% set name_type = 'personal' %}
+        {%- elseif name_type_and_role starts with 'corporate_' -%}
+      	   {%- set name_type = 'corporate' -%}
+        {%- endif -%}
+        {%- if name_type is not empty -%}
+        {#- Now we remove 'type', e.g 'corporate_' -#}
+          {%- set name_role = name_type_and_role|replace({(name_type ~ '_'):''}) -%}
+          {# in case the name_role contains one of roles_that_are_no_roles, e.g
+          something like `creator_authority_marcrelator` we remove that #}
+          {% for role_that_is_no_role in roles_that_are_no_roles %}
+             {%- set name_role = name_role|replace({(role_that_is_no_role):''}) -%}
+          {% endfor %}
+          {# After removing all what can not be a role if we end with an empty #}
+          {% if name_role|trim|length == 0 %}
+             {%- set name_role = "creator" %}
+          {% else %}
+            {%- set name_role = name_role|replace({'\\/':'//' , '_':' '})|trim -%}
+          {% endif %}
+        {#- we iterate over all possible vocabularies and fetch the reconciliated names from them (if any) -#}
+          {%- for approach, names in value -%} 
+        {#- if there are actually name pairs (name and uri) that were reconciliated we use them -#}
+            {%- if names|length > 0 -%}
+              {#- we call the ami_lod_reconcile twig extension with the role label using the LoC Relators endpoint in english and get 1 result -#}
+              {%- set role_uri = ami_lod_reconcile(name_role|lower|capitalize,'loc;relators;thing','en',1) -%}
+              {#- for each found name pair in a list of possible LoD reconciliated elements we generate the final structure that goes into "creator_lod" json key -#}
+              {%- for name in names -%} 
+                {%- set creator_lod = creator_lod|merge([{'role_label': name_role|lower|capitalize, 'role_uri': role_uri[0].uri, "agent_type": name_type, "name_label": name.label, "name_uri": name.uri}]) -%}     
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {% endif -%}
+      {%- endif -%} 
+    {%- endfor -%}
+    {# Now go for the RAW CSV data for names #}
+    {%- for key,value in data -%}
+    {# here we skip values previoulsy fetched from LoD and stored in name_has_creator_lod #}
+      {%- if key not in name_has_creator_lod and key starts with 'mods_name_' and key ends with '_namepart' -%}
+      {# If there is mods_name_SOMETHING_namepart in data_lod we keep track so we 
+      do not try afterwards to use that Sources KEY from the CSV.
+      #}
+        {%- set name_has_creator_lod = name_has_creator_lod|merge([key]) -%}
+      {# Now we remove 'mods_name_' and '_namepart' #}
+        {%- set name_type_and_role = key|replace({'mods_name_':'', '_namepart':''}) -%}
+      {# We will only target personal or corporate. If any of those are missing we skip? #}
+        {%- set name_type = null -%}
+        {%- if name_type_and_role starts with 'personal_' -%}
+           {%- set name_type = 'personal' -%}
+        {%- elseif name_type_and_role starts with 'corporate_' -%}
+      	   {%- set name_type = 'corporate' -%}
+        {%- endif -%}
+        {% if name_type is not empty %}
+        {# Now we remove 'type', e.g 'corporate_' #}
+          {%- set name_role = name_type_and_role|replace({(name_type ~ '_'):''}) -%}
+          {# in case the name_role contains one of roles_that_are_no_roles, e.g
+          something like `creator_authority_marcrelator` we remove that #}
+          {% for role_that_is_no_role in roles_that_are_no_roles %}
+             {%- set name_role = name_role|replace({(role_that_is_no_role):''}) -%}
+          {% endfor %}
+          {# After removing all what can not be a role if we end with an empty #}
+          {% if name_role|trim|length == 0 %}
+             {%- set name_role = "creator" %}
+          {% else %}
+            {%- set name_role = name_role|replace({'\\/':'//' , '_':' '})|trim -%}
+          {% endif %}
+          {# Now we check if there is a corresponding _valueuri for this #}
+          {% set name_uris = [] %}
+          {%- if data[('mods_name_' ~ name_type_and_role ~ '_valueuri')] is not empty 
+          and data[('mods_name_' ~ name_type_and_role ~ '_valueuri')] != '' -%}
+            {%- set name_uris = data[('mods_name_' ~ name_type_and_role ~ '_valueuri')]|split('|@|') -%}
+          {%- endif -%}
+          {%- set role_uri = ami_lod_reconcile(name_role|lower|capitalize,'loc;relators;thing','en',1) -%}
+        {#- we split and iterate over the value of the mods_name key -#}
+        {# NOTE. THIS IS TARGETING Anything after the year 1000, or 2000 #}
+          {%- for index,name in value|replace({'|@|1':', 1', '|@|2':', 2', '|@|-':', -'})|split('|@|') -%}
+            {%- if name is not empty and name|trim != '' -%}
+              {%- set name_uri = null -%}
+              {# Here we can check if one of the names IS not a name (e.g a year? #}
+              {#- we call the ami_lod_reconcile twig extension with the role label using the LoC Relators endpoint in english and get 1 result -#}
+              {%- if name_uris[index] is defined and name_uris[index] is not empty -%}
+                 {%- set name_uri = name_uris[index] -%}
+              {%- endif -%}
+              {%- set creator_lod = creator_lod|merge([{'role_label': name_role|lower|capitalize, 'role_uri': role_uri[0].uri, "agent_type": name_type, "name_label": name, "name_uri": name_uri}]) -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor ~%}
+    {% if creator_lod is defined and creator_lod is not empty %}
+    "creator_lod": {{ creator_lod|json_encode|raw -}},
+    {% endif %}
+    {#- END Names from LoD and MODS CSV with/without URIS. -#}
     {% if data.mods_origininfo_publisher|length > 0 %}
     "publisher": {{ data.mods_origininfo_publisher|json_encode|raw }},
     {% endif %}
@@ -317,22 +386,16 @@ Add a switch for hemisphere.
     {% if data.mods_origininfo_place_placeterm_text|length > 0 %}
     "place_of_publication": {{ data.mods_origininfo_place_placeterm_text|json_encode|raw }},
     {% endif %}
-    {# DCPL LF 2024-11-12 addded Source - mods_relateditem_original_titleinfo_title #}
-    {% if data.mods_relateditem_original_titleinfo_title|length > 0 %}
-    "source": {{ data.mods_relateditem_original_titleinfo_title|split('|@|')|json_encode|raw }},
-    {% endif %}
- {# LF 2024-12-02 added |split('|@|')| to data.mods_relateditem_original_titleinfo_title #}
  {#   {% if data.mods_language_languageterm|length > 0 %}
 	"language": {{ data.mods_language_languageterm|split('|@|')|json_encode|raw }},   
     {% endif %} #}
     {% if data.language|length > 0 %}
 	"language": {{ data.language|split('|@|')|json_encode|raw }},   
     {% endif %}
-    {% if data.mods_language_languageterm_code|length > 0 %}
-	"language": {{ data.mods_language_languageterm_code|split('|@|')|json_encode|raw }},   
+    {% if data.mods_language_languageterm_text|length > 0 %}
+	"language": {{ data.mods_language_languageterm_text|split('|@|')|json_encode|raw }},   
     {% endif %}
-    {#DCPL LF 2024-11-12 updated to mods_language_languageterm_code
-    ~ Language information may also be sourced from:
+    {#~ Language information may also be sourced from:
     - mods_language_languageTerm_code
     - mods_language_languageTerm_text
     - mods_language_languageterm_code_authority_iso639-2b
@@ -348,20 +411,9 @@ Add a switch for hemisphere.
     {% if data.mods_identifier_local|length > 0 %}
     "local_identifier": {{ data.mods_identifier_local|split('|@|')|json_encode|raw }},
     {% endif %}
-    {#- RL 2024-11-21 added statement for legacy handle URLs to display -#}
-    {% if data.mods_identifier_uri|length > 0 %}
-    "legacy_identifier_uri": {{ data.mods_identifier_uri|split('|@|')|json_encode|raw }},
+    {% if data.mods_accesscondition_useandreproduction|length > 0 %}
+    "rights_statement": {{ data.mods_accesscondition_useandreproduction|json_encode|raw }},
     {% endif %}
-    {# RL 2024-11-13 created separate "if" conditions for mods_accessconditions with and w/o multiple values #}
-    {% if data.mods_accesscondition|length > 0 %}
-    	{% if '|@|' in data.mods_accesscondition %}
-        	"rights_statement": {{ data.mods_accesscondition|split('|@|')|json_encode|raw }},
-        {% else %}
-            "rights_statement": {{ data.mods_accesscondition|json_encode|raw }},
-        {% endif %}
-    {% endif %}
-    
-    {#DCPL LF 2024-11-12 added split and updated "rights_statement" to modes_accesscondition
     {% if data.mods_accesscondition_local_rights_statements|length > 0 %}
     "rights": {{ data.mods_accesscondition_local_rights_statements|json_encode|raw }},
     {% endif %}
@@ -370,27 +422,128 @@ Add a switch for hemisphere.
     - mods_accessCondition_local_rights_statement
     - mods_accessCondition_use_and_reproduction_xlinkhref
     -#}
+    {#- Testing the LoD Reconciliation key structures for the example elements here is strongly recommended.
+    Please also note that particular vocabulary references in I7 element keys may not accurately reflect a particular vocabulary, 
+    meaning the values may not have been verified against the particular vocabulary source (such as LoC or Getty AAT).
+    -#}
     
-    
-    {# October 2024 Updated Example for DCPL   
-      - Subjects from mods_subject_topic with no LoD Reconciliation
-      #}
-   {% if data.mods_subject_topic|length > 0 %}
-   "subject_topic": {{ data.mods_subject_topic|split('|@|')|json_encode|raw }},
-   {% endif %}     
-    
-  {# Removed all other subject examples showing different LoD Reconciliation options for source spreadsheets
-    that may contain value_uris coming from a separate field in another repository environment #}  
-    
+    {#- START Subjects from LoD and MODS CSV with/without URIS. -#} 
+    {# Updated August 26th 2022, by Diego Pino. #}
+    {%~ set subject_lcnaf_personal_names = [] -%} 
+    {%~ set subject_lcnaf_corporate_names = []-%}
+    {# Used to keep track of parts after the type (corporate, etc) that are no roles
+     but authority properties. Add more if you find them #}
+    {%  set subject_autorities = ['authority_lcsh','authority_naf','authority_aat'] %}
+    {# Go for the RAW CSV data for subjects #}
+    {%- for key,value in data -%}
+    {# here we skip values previoulsy fetched from LoD and stored in name_has_creator_lod #}
+      {%- if key starts with 'mods_subject_name_' and key ends with '_namepart' -%}
+      {# Now we remove 'mods_subject_name_' and '_namepart' #}
+        {%- set name_type_and_authority = key|replace({'mods_subject_name_':'', '_namepart':''}) -%}
+      {# We will only target personal or corporate. If any of those are missing we skip? #}
+        {%- set name_type = null -%}
+        {%- if name_type_and_authority starts with 'personal_' -%}
+           {%- set name_type = 'personal' -%}
+        {%- elseif name_type_and_authority starts with 'corporate_' -%}
+      	   {%- set name_type = 'corporate' -%}
+        {%- endif -%}
+        {% if name_type is not empty %}
+        {# Now we remove 'type', e.g 'corporate_' #}         
+          {# Now we check if there is a corresponding _valueuri for this #}
+          {% set name_uris = [] %}
+          {# for end suffix of '_valueuri' #}
+          {%- if data[('mods_subject_name_' ~ name_type_and_authority ~ '_valueuri')] is not empty 
+          and data[('mods_subject_name_' ~ name_type_and_authority ~ '_valueuri')] != '' -%}
+            {%- set name_uris = data[('mods_subject_name_' ~ name_type_and_authority ~ '_valueuri')]|split('|@|') -%}
+          {%- endif -%}
+          {# for end suffix of '_authorityuri' : added by Allison 10/19/2023 #}
+          {%- if data[('mods_subject_name_' ~ name_type_and_authority ~ '_authorityuri')] is not empty 
+          and data[('mods_subject_name_' ~ name_type_and_authority ~ '_authorityuri')] != '' -%}
+            {%- set name_uris = data[('mods_subject_name_' ~ name_type_and_authority ~ '_authorityuri')]|split('|@|') -%}
+          {%- endif -%}
+        {#- we split and iterate over the value of the mods_name key -#}
+        {# NOTE. THIS IS TARGETING Anything after the year 1000, or 2000 #}
+          {%- for index,name in value|replace({'|@|1':', 1', '|@|2':', 2', '|@|-':', -'})|split('|@|') -%}
+            {%- if name is not empty and name|trim != '' -%}
+              {%- set name_uri = null -%}
+              {# Here we can check if one of the names IS not a name (e.g a year? #}
+              {#- we call the ami_lod_reconcile twig extension with the role label using the LoC Relators endpoint in english and get 1 result -#}
+              {%- if name_uris[index] is defined and name_uris[index] is not empty -%}
+                 {%- set name_uri = name_uris[index] -%}
+              {%- endif -%}
+              {# Here we decide where to store this data based on the authoriy/if any #}
+              {% if name_type == 'personal' %}
+                {%- set subject_lcnaf_personal_names = subject_lcnaf_personal_names|merge([{'uri': name_uri, 'label': name}]) -%}
+              {% elseif  name_type == 'corporate' %}
+                {%- set subject_lcnaf_corporate_names = subject_lcnaf_corporate_names|merge([{'uri': name_uri, 'label': name}]) -%}
+              {% endif %}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor ~%}   
+  {# Now output what we collected #} 
+  {% if subject_lcnaf_personal_names|length > 0 %} 
+  "subject_lcnaf_personal_names": {{ subject_lcnaf_personal_names|json_encode|raw }},
+  {% endif %}
+  {% if subject_lcnaf_corporate_names|length > 0 %} 
+  "subject_lcnaf_corporate_names": {{ subject_lcnaf_corporate_names|json_encode|raw }},
+  {% endif %}
+{# subject_loc and getty_aat additions, working with Diego (thank you!) on 10/27 #}  
+{%- if data['mods_subject_authority_lcsh_topic'] is defined and not empty -%}
+    {% set subjects = data["mods_subject_authority_lcsh_topic"] is iterable ? data["mods_subject_authority_lcsh_topic"] : data["mods_subject_authority_lcsh_topic"]|split('|@|') %} 
+    {% set subject_uris = data["mods_subject_authority_lcsh_valueuri"] is defined ? data["mods_subject_authority_lcsh_valueuri"] : '' %} 
+    {# the same can be done as set subject_uris = data["mods_subject_authority_lcsh_valueuri"]|default('') *cool* #}
+    {# set subject_uris_list = data["mods_subject_authority_lcsh_valueuri"] is defined ? data["mods_subject_authority_lcsh_valueuri"] : data["mods_subject_authority_lcsh_valueuri"]|default('')|split('|@|') %} #}
+    {% set subject_uris_list = subject_uris is iterable ? subject_uris : subject_uris|split('|@|') %}
+    "subject_loc": [
+        {% for subject in subjects %}
+        {
+            "uri": {{ subject_uris_list[loop.index0]|default('')|json_encode|raw }},
+            "label": {{ subject|json_encode|raw }}
+        }
+        {{ not loop.last ? ',' : '' }}
+        {% endfor %}
+    ],
+{%- endif -%}
+{%- if data['mods_genre_authority_aat'] is defined and not empty -%}
+    {% set subjects = data["mods_genre_authority_aat"] is iterable ? data["mods_genre_authority_aat"] : data["mods_genre_authority_aat"]|split('|@|') %} 
+    {% set subject_uris = data["mods_genre_authority_aat_valueuri"] is defined ? data["mods_genre_authority_aat_valueuri"] : '' %} 
+    {# the same can be done as set subject_uris = data["mods_subject_authority_lcsh_valueuri"]|default('') *cool* #}
+    {# set subject_uris_list = data["mods_subject_authority_lcsh_valueuri"] is defined ? data["mods_subject_authority_lcsh_valueuri"] : data["mods_subject_authority_lcsh_valueuri"]|default('')|split('|@|') %} #}
+    {% set subject_uris_list = subject_uris is iterable ? subject_uris : subject_uris|split('|@|') %}
+    "term_aat_getty": [
+        {% for subject in subjects %}
+        {
+            "uri": {{ subject_uris_list[loop.index0]|default('')|json_encode|raw }},
+            "label": {{ subject|json_encode|raw }}
+        }
+        {{ not loop.last ? ',' : '' }}
+        {% endfor %}
+    ],
+{%- endif -%}
+{%- if data['mods_genre_authority_lcgft'] is defined and not empty -%}
+    {% set subjects = data["mods_genre_authority_lcgft"] is iterable ? data["mods_genre_authority_lcgft"] : data["mods_genre_authority_lcgft"]|split('|@|') %} 
+    {% set subject_uris = data["mods_genre_authority_lcgft_valueuri"] is defined ? data["mods_genre_authority_lcgft_valueuri"] : '' %} 
+    {# the same can be done as set subject_uris = data["mods_subject_authority_lcsh_valueuri"]|default('') *cool* #}
+    {# set subject_uris_list = data["mods_subject_authority_lcsh_valueuri"] is defined ? data["mods_subject_authority_lcsh_valueuri"] : data["mods_subject_authority_lcsh_valueuri"]|default('')|split('|@|') %} #}
+    {% set subject_uris_list = subject_uris is iterable ? subject_uris : subject_uris|split('|@|') %}
+    "subject_lcgft_terms": [
+        {% for subject in subjects %}
+        {
+            "uri": {{ subject_uris_list[loop.index0]|default('')|json_encode|raw }},
+            "label": {{ subject|json_encode|raw }}
+        }
+        {{ not loop.last ? ',' : '' }}
+        {% endfor %}
+    ],
+{%- endif -%} 
 {# <-- SUBJECTS: TOPICS #}
   {#- LCSH -#}
     {% if data.subject_loc|length > 0 %}
     "subject_loc": {{ data.subject_loc|json_encode|raw }},
     {% endif %}
-  {# October 2024 Updated Example for DCPL Note: just noting that this shows a very simple example of 
-    mapping for LoD Reconciliated Subjects. Adjust closing comment to use #}
-  {#  
-    {% if data.mods_subject_topic|length > 0 %}
+  {#  {% if data.mods_subject_topic|length > 0 %}
     "subject_loc": {{ data_lod.mods_subject_topic.loc_subjects_thing|json_encode|raw }},
     {% endif %}
   #}
@@ -411,6 +564,7 @@ Add a switch for hemisphere.
     {% if data.mods_genre|length > 0 %}
     "term_aat_getty": {{ data_lod.mods_genre.getty_aat_terms|json_encode|raw }},
     {% endif %}
+    {# Added for Barnard Oct 2022, assuming CVS contains JSON for data.subject_lcgft_terms #}
     {% if data.subject_lcgft_terms is iterable %}
     "subject_lcgft_terms": {{ data.subject_lcgft_terms|json_encode|raw }},
     {% endif %}
@@ -422,14 +576,12 @@ Add a switch for hemisphere.
     "subject_temporal": {{ data.mods_subject_temporal|json_encode|raw }},
    {% endif %}
    {% endif %}
-{#- October 2024 Updated Examples for DCPL: see notes below
-  <-- Geographic Info and terms:
+{#- <-- Geographic Info and terms:
   Includes options for geographic info already present as
   - full Nominatim or LCNAF JSON in source data
   - reconciliated values against LC Geographic Names
-  - Nominatim lookup by value/label OR address **commented out for DCPL
-  - Nominatim lookup by coordinates **updated for DCPL data that has no separating comma, values like "38.8875 - 77.0364"
-  - **Added for DCPL example of mapping for mods_subject_hierarchicalgeographic_citysection
+  - Nominatim lookup by value/label
+  - Nominatim lookup by coordinates 
   -#}
   	{% if data.geographic_location|length > 0 %}
     "geographic_location": {{ data.geographic_location|json_encode|raw }},
@@ -442,7 +594,6 @@ Add a switch for hemisphere.
     "subject_lcnaf_geographic_names": {{ data_lod.mods_subject_geographic.loc_geographicareas_thing|json_encode|raw }}, 
     {% endif %}
     {#- use value for Nominatim search -#}
-  {#  
     {% if data.mods_subject_geographic|length > 0 %}
     {% set nominatim_from_label = ami_lod_reconcile(data.mods_subject_geographic,'nominatim;thing;search','en') -%}
     "geographic_location": {{ nominatim_from_label|json_encode|raw }},
@@ -451,27 +602,11 @@ Add a switch for hemisphere.
     {% set nominatim_from_label = ami_lod_reconcile(data.mods_note_address,'nominatim;thing;search','en') -%}
     "geographic_location": {{ nominatim_from_label|json_encode|raw }},
     {% endif %}
-  #}  
     {#- use coordinates for Nominatim search, if provided -#}
     {% if data.mods_subject_cartographics_coordinates|length > 0 %}
-        {% if '- ' in data.mods_subject_cartographics_coordinates %}
-   		   {% set mods_subject_cartographics_coordinates_clean = data.mods_subject_cartographics_coordinates|replace({'- ':', -'}) %}
-   		   {% set nominatim_from_coordinates = ami_lod_reconcile(mods_subject_cartographics_coordinates_clean,'nominatim;thing;reverse','en') %}
-       "geographic_location": {{ nominatim_from_coordinates|json_encode|raw }},
-	   {% endif %}
+    {% set nominatim_from_coordinates = ami_lod_reconcile(data.mods_subject_cartographics_coordinates,'nominatim;thing;reverse','en') -%}
+    "geographic_location": {{ nominatim_from_coordinates|json_encode|raw }},
     {% endif %}
-  {# October 2024 Updated Example for DCPL - simple mapping for mods_subject_hierarchicalgeographic_citysection
-  DCPL LF 2024-11-12 added mods_subject_hierarchicalgeographic_city and mods_subject_hierarchicalgeographic_region#}
-  {% if data.mods_subject_hierarchicalgeographic_citysection|length > 0 %}
-   "subject_hierarchical_geographic_city_section": {{ data.mods_subject_hierarchicalgeographic_citysection|split('|@|')|json_encode|raw }},  
-  {% endif %}
-  {% if data.mods_subject_hierarchicalgeographic_city|length > 0 %}
-   "subject_hierarchical_geographic_city": {{ data.mods_subject_hierarchicalgeographic_city|split('|@|')|json_encode|raw }},  
-  {% endif %}
-  {% if data.mods_subject_hierarchicalgeographic_region|length > 0 %}
-   "subject_hierarchical_geographic_region": {{ data.mods_subject_hierarchicalgeographic_region|split('|@|')|json_encode|raw }},  
-  {% endif %}
-    
 {#- Geographic Info and terms --> #}  
 {# SUBJECTS: TOPICS --> #}
 {# <-- SUBJECTS: PERSONAL NAMES #}
@@ -523,7 +658,7 @@ Add a switch for hemisphere.
     "subjects_local": {{ data.subjects_unmapped|split('|@|')|json_encode|raw }},
     {% endif %}
     {% if data.mods_location_physical_location|length > 0 %}
-	  "physical_location": {{ data.mods_location_physical_location|json_encode|raw }},
+	"physical_location": {{ data.mods_location_physical_location|json_encode|raw }},
     {% endif %}
     {% if data.mods_physicaldescription_digitalorigin|length > 0 %}
     "physical_description_digital_origin": {{ data.mods_physicaldescription_digitalorigin|json_encode|raw }},
